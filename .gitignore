@@ -2,3 +2,5 @@
 *.class
 *.swp
 *.DS_Store
+bin/
+.metadata
