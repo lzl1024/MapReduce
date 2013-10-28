@@ -20,7 +20,7 @@ public class Message implements Serializable {
 
     public static enum MSG_TYPE {
         FILE_SPLIT_REQ, FILE_SPLIT_ACK, SLAVE_QUIT, KEEP_ALIVE, NODE_FAIL, NODE_FAIL_ACK,
-        WORK_COMPELETE
+        WORK_COMPELETE, WORK_FAIL, NEW_JOB
     }
     
     //fields

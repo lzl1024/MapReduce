@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 
+import mapreduce.Job;
 import socket.Message;
 import util.Constants;
 
@@ -51,6 +52,18 @@ public class MasterPassiveListener extends Thread {
 					new Message(Message.MSG_TYPE.NODE_FAIL_ACK, null).send(
 							sock, null, -1);
 					break;
+				// new Job comes
+				case NEW_JOB:
+					try {
+						handleJob((Job) msg.getContent());
+						new Message(Message.MSG_TYPE.WORK_COMPELETE, null).send(
+								sock, null, -1);
+					} catch (Exception e) {
+						e.printStackTrace();
+						new Message(Message.MSG_TYPE.WORK_FAIL, null).send(
+								sock, null, -1);
+					}
+					break;
 				default:
 					throw new IOException();
 				}
@@ -58,6 +71,16 @@ public class MasterPassiveListener extends Thread {
 				e.printStackTrace();
 			}
 		}
+	}
+
+	/**
+	 * Handle a mapreduce Job include schedule the mapper and
+	 * reducer, execute mapreduce facility
+	 * @param content
+	 */
+	private void handleJob(Job content) throws Exception{
+		// TODO Auto-generated method stub
+
 	}
 
 }

@@ -12,7 +12,7 @@ import util.Constants;
  * Master will poll slaves with Keep-alive for every 5s in case of some mappers
  * fail without being reported
  */
-public class KeepAliveProcess extends Thread {
+public class MasterKeepAlive extends Thread {
 	public void run() {
 		while (true) {
 			Message msg = new Message(Message.MSG_TYPE.KEEP_ALIVE, null);

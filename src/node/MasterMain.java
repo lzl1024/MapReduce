@@ -51,7 +51,7 @@ public class MasterMain {
 		new MasterPassiveListener().start();
 
 		// keep alive
-		new KeepAliveProcess().start();
+		new MasterKeepAlive().start();
 
 		// start main routine
 		executing();
@@ -71,7 +71,7 @@ public class MasterMain {
 		}
 
 		// int i = 0;
-		// manage join, leave and fail
+		// manage join
 		while (true) {
 			Socket sock = null;
 			try {
