@@ -12,20 +12,26 @@ public class Constants {
 	 */
 	// the port for dfs to dispatch files
 	public static int FiledispatchPort;
+	// the port that slave actively send msg to master
+	public static int SlaveActivePort;
+	// the port the master running on
+	public static int MainRoutingPort;
 	// timeout time when client download a file
 	public static int FileDownloadTimeout;
 	// the time out value for regular communication
 	public static int RegularTimout;
-	// the port the master running on
-	public static int MainRoutingPort;
 	// the ip address of the master
 	public static String MasterIp;
 	// the number of mapper
 	public static int IdealMapperNum;
 	// the number of reducer
 	public static int IdealReducerNum;
-	// the port that slave actively send msg to master
-	public static int SlaveActivePort;
+	// the ideal number of mapper job in one slave
+	public static int IdealMapperJobs;
+	// the ideal number of reducer job in one slave
+	public static int IdealReduderJobs;
+	// the replication factor
+	public static int ReplFac;
 
 	/**
 	 * Initialized parameters
@@ -33,6 +39,7 @@ public class Constants {
 	public static String FS_LOCATION = "fs/";
 	public static String HTTP_PREFIX = "http://";
 	public static int KEEP_ALIVE_INT = 5000;
+	public static int Random_Base = 1000;
 
 	/**
 	 * Parse the configuration file
@@ -74,6 +81,9 @@ public class Constants {
 			IdealReducerNum = Integer.parseInt(args.get("IdealReducerNum"));
 			SlaveActivePort = Integer.parseInt(args.get("SlaveActivePort"));
 			RegularTimout = Integer.parseInt(args.get("RegularTimout"));
+			IdealReduderJobs = Integer.parseInt(args.get("IdealReduderJobs"));
+			IdealMapperJobs = Integer.parseInt(args.get("IdealMapperJobs"));
+			ReplFac = Integer.parseInt(args.get("ReplFac"));
 
 			MasterIp = args.get("MasterIp");
 			if (MasterIp == null) {

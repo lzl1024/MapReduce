@@ -1,6 +1,6 @@
 ConfigFile = configuration/config.txt
-InputPath1 = fs/story1.txt
-OutputPath1 = fs/story1.out
+InputPath1 = story1.txt
+OutputPath1 = story1.out
 
 all:	
 	javac -cp .:lib/http-20070405.jar dfs/*.java examples/*.java io/*.java mapreduce/*.java \

@@ -11,4 +11,7 @@ RegularTimout=50000
 //Rule Configuration
 IdealMapperNum=2
 IdealReducerNum=2
+IdealMapperJobs=2
+IdealReduderJobs=2
+ReplFac=2
 

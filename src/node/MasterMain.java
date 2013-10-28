@@ -23,8 +23,8 @@ import dfs.FileTransmitServer;
  */
 public class MasterMain {
 	// pool to record the slave socket
-	public static ConcurrentHashMap<SocketAddress, Socket> slavePool = new ConcurrentHashMap<SocketAddress, Socket>();
-
+	public static ConcurrentHashMap<SocketAddress, SlaveInfo> slavePool = new ConcurrentHashMap<SocketAddress, SlaveInfo>();
+	
 	public static void main(String[] args) {
 		// fill up the constants
 		try {
@@ -47,21 +47,22 @@ public class MasterMain {
 			System.out.println("Create Server Failed");
 		}
 
-		// start active listener
-		new MasterPassiveListener().start();
+		// start scheduler
+		Scheduler scheduler = new Scheduler();
+		scheduler.start();
 
-		// keep alive
+		// keep alive process start
 		new MasterKeepAlive().start();
 
 		// start main routine
-		executing();
+		executing(scheduler);
 
 		server.stop(0);
 		System.exit(0);
 	}
 
 	@SuppressWarnings("resource")
-	private static void executing() {
+	private static void executing(Scheduler scheduler) {
 		ServerSocket serverSock = null;
 		try {
 			serverSock = new ServerSocket(Constants.MainRoutingPort);
@@ -77,7 +78,8 @@ public class MasterMain {
 			try {
 				sock = serverSock.accept();
 				sock.setSoTimeout(Constants.RegularTimout);
-				slavePool.put(sock.getRemoteSocketAddress(), sock);
+				slavePool.put(sock.getRemoteSocketAddress(),
+						new SlaveInfo(sock));
 				// i++;
 				// if (i == 2)
 				// break;
@@ -110,8 +112,12 @@ public class MasterMain {
 	 * 
 	 * @param content
 	 */
-	public static void handleLeave(ArrayList<SocketAddress> content) {
-		// TODO Auto-generated method stub
+	public static void handleLeave(ArrayList<SocketAddress> removeList) {
+		// TODO reschedule its works
 
+		// delete the slave from pool
+		for (SocketAddress add : removeList) {
+			MasterMain.slavePool.remove(add);
+		}
 	}
 }

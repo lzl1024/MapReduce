@@ -18,7 +18,8 @@ public class MasterKeepAlive extends Thread {
 			Message msg = new Message(Message.MSG_TYPE.KEEP_ALIVE, null);
 			ArrayList<SocketAddress> failList = new ArrayList<SocketAddress>();
 			// poll all slaves
-			for (Socket sock : MasterMain.slavePool.values()) {
+			for (SlaveInfo info : MasterMain.slavePool.values()) {
+				Socket sock = info.getSocket();
 				try {
 					msg.send(sock, null, -1);
 					if (Message.receive(sock, null, -1).getType() != Message.MSG_TYPE.KEEP_ALIVE) {

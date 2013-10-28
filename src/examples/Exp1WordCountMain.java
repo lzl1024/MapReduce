@@ -16,8 +16,8 @@ public class Exp1WordCountMain {
 		job.setInputFile(args[1]);
 		job.setOutputFile(args[2]);
 		
-		job.setMapperClass(Exp1WordCountMapper.class);
-		job.setReducerClass(Exp1WordCountReducer.class);
+		job.setMapperClass("Exp1WordCountMapper");
+		job.setReducerClass("Exp1WordCountReducer");
 		
 		try {
 			job.waitForCompletion(args[0]);

@@ -9,8 +9,10 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
+import node.MasterMain;
 import socket.Message;
 import util.Constants;
 
@@ -31,10 +33,11 @@ public class FileSplit {
 	 * 
 	 * @param fileName
 	 * @param replNum
+	 * @param jobID
 	 * @return file split names
 	 * @throws IOException
 	 */
-	private static String[] splitFile(String fileName, int replNum)
+	private static String[] splitFile(String fileName, int replNum, int jobID)
 			throws IOException {
 		File file = new File(fileName);
 		PrintWriter[] pwList = new PrintWriter[replNum];
@@ -46,7 +49,7 @@ public class FileSplit {
 
 		// get split names
 		for (int i = 1; i <= replNum; i++) {
-			splitNames[i - 1] = fileName + i;
+			splitNames[i - 1] = jobID + "_" + fileName + i;
 			pwList[i - 1] = new PrintWriter(new FileWriter(splitNames[i - 1]),
 					true);
 		}
@@ -76,15 +79,17 @@ public class FileSplit {
 	 * @param fileName
 	 * @param replFac
 	 * @param mapperNum
-	 * @return failed mappers should be handled in other class
+	 * @return the inverse layout that key is filename and value is socket list
 	 * @throws Exception
 	 * @throws IOException
 	 */
-	public static ArrayList<Socket> fileDispatch(ArrayList<Socket> freeMappers,
-			String fileName, int replFac, int mapperNum) throws Exception {
+	public static HashMap<String, ArrayList<SocketAddress>> fileDispatch(
+			ArrayList<Socket> freeMappers, String fileName, int replFac,
+			int mapperNum, int jobID) throws Exception {
 		// split the file
-		String[] fileSplits = splitFile(fileName, mapperNum);
-		ArrayList<Socket> failedMappers = new ArrayList<Socket>();
+		String[] fileSplits = splitFile(fileName, mapperNum, jobID);
+		ArrayList<SocketAddress> failedMappers = new ArrayList<SocketAddress>();
+		HashMap<String, ArrayList<SocketAddress>> returnLayout = new HashMap<String, ArrayList<SocketAddress>>();
 
 		int mapperPointer = 0;
 		// set time out
@@ -95,7 +100,8 @@ public class FileSplit {
 				mapperPointer++;
 			} catch (Exception e) {
 				// add to fail mapper list if timeout
-				failedMappers.add(freeMappers.get(mapperPointer));
+				failedMappers.add(freeMappers.get(mapperPointer)
+						.getRemoteSocketAddress());
 				freeMappers.remove(mapperPointer);
 			}
 		}
@@ -107,6 +113,7 @@ public class FileSplit {
 		for (String fileSplit : fileSplits) {
 			Message downloadREQ = new Message(Message.MSG_TYPE.FILE_SPLIT_REQ,
 					fileSplit);
+			ArrayList<SocketAddress> splitSock = new ArrayList<SocketAddress>();
 
 			// dispatch replicas
 			for (int i = 0; i < replFac; i++) {
@@ -127,10 +134,15 @@ public class FileSplit {
 						tmp.add(fileSplit);
 						splitLayout.put(key, tmp);
 					}
+
+					// add to entry
+					splitSock.add(key);
+
 					mapperPointer = (mapperPointer + 1) % freeMappers.size();
 				} catch (Exception e) {
 					// add to fail mapper list if timeout
-					failedMappers.add(freeMappers.get(mapperPointer));
+					failedMappers.add(freeMappers.get(mapperPointer)
+							.getRemoteSocketAddress());
 					freeMappers.remove(mapperPointer);
 
 					// too many free mappers fail!
@@ -139,6 +151,8 @@ public class FileSplit {
 					}
 				}
 			}
+
+			returnLayout.put(fileSplit, splitSock);
 		}
 
 		mapperPointer = 0;
@@ -150,17 +164,21 @@ public class FileSplit {
 				mapperPointer++;
 			} catch (Exception e) {
 				// add to fail mapper list if timeout
-				failedMappers.add(freeMappers.get(mapperPointer));
+				failedMappers.add(freeMappers.get(mapperPointer)
+						.getRemoteSocketAddress());
 				freeMappers.remove(mapperPointer);
 			}
 		}
-		return failedMappers;
+
+		MasterMain.handleLeave(failedMappers);
+
+		return returnLayout;
 	}
 
 	// for test
 	public static void main(String[] args) throws IOException {
 		new Constants(args[0]);
-		splitFile("src/fs/story1.txt", 2);
+		splitFile("src/fs/story1.txt", 2, 1);
 	}
 
 }

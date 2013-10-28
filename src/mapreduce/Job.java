@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.Socket;
 
+import node.Scheduler;
 import socket.Message;
 import util.Constants;
 
@@ -20,8 +21,8 @@ public class Job implements Serializable {
 
 	private int jobID;
 	private String jobName;
-	private Class<?> MapperClass;
-	private Class<?> ReducerClass;
+	private String MapperClass;
+	private String ReducerClass;
 	private String inputFile;
 	private String outputFile;
 
@@ -41,19 +42,19 @@ public class Job implements Serializable {
 		this.jobName = jobName;
 	}
 
-	public Class<?> getMapperClass() {
+	public String getMapperClass() {
 		return MapperClass;
 	}
 
-	public void setMapperClass(Class<?> mapperClass) {
+	public void setMapperClass(String mapperClass) {
 		MapperClass = mapperClass;
 	}
 
-	public Class<?> getReducerClass() {
+	public String getReducerClass() {
 		return ReducerClass;
 	}
 
-	public void setReducerClass(Class<?> reducerClass) {
+	public void setReducerClass(String reducerClass) {
 		ReducerClass = reducerClass;
 	}
 
@@ -88,7 +89,7 @@ public class Job implements Serializable {
 		}
 
 		Socket sock = new Socket(Constants.MasterIp, Constants.SlaveActivePort);
-		//send the job to master and wait for completion
+		// send the job to master and wait for completion
 		new Message(Message.MSG_TYPE.NEW_JOB, this).send(sock, null, -1);
 		if (Message.receive(sock, null, -1).getType() != Message.MSG_TYPE.WORK_COMPELETE) {
 			sock.close();
@@ -97,4 +98,14 @@ public class Job implements Serializable {
 		sock.close();
 	}
 
+	public boolean generateJobID() {
+		// generate job ID
+		int i = 0;
+		while (i < 1000
+				&& Scheduler.jobPool.containsKey(jobID = (int) Math.random()
+						* Constants.Random_Base)) {
+			i++;
+		}
+		return i == 1000 ? false : true;
+	}
 }
