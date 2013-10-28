@@ -7,6 +7,7 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.concurrent.ConcurrentHashMap;
 
+import socket.Message;
 import util.Constants;
 
 import com.sun.net.httpserver.HttpHandler;
@@ -47,6 +48,9 @@ public class Master {
 			System.out.println("Create Server Failed");
 		}
 
+		// start active listener
+		new SlaveListener().start();
+
 		// start main routine
 		executing();
 
@@ -54,27 +58,27 @@ public class Master {
 		System.exit(0);
 	}
 
+	@SuppressWarnings("resource")
 	private static void executing() {
 		ServerSocket serverSock = null;
 		try {
 			serverSock = new ServerSocket(Constants.MainRoutingPort);
 		} catch (IOException e) {
-			System.out.println("Server Socket cannot be openned");
+			System.out.println("Master Server Socket cannot be openned");
 			System.exit(0);
 		}
 
-		int i = 0;
+//		int i = 0;
 		// manage join, leave and fail
 		while (true) {
 			Socket sock = null;
 			try {
 				sock = serverSock.accept();
 				slavePool.put(sock.getRemoteSocketAddress(), sock);
-				i++;
-				if (i == 2)
-					break;
+//				i++;
+//				if (i == 2)
+//					break;
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 				System.exit(0);
 			}
@@ -90,9 +94,43 @@ public class Master {
 //					+ "story1.txt", 2, 2);
 //			System.out.println(FileSplit.splitLayout);
 //		} catch (Exception e) {
-//			// TODO Auto-generated catch block
 //			e.printStackTrace();
 //		}
 //		while(true){}
+	}
+	
+	/**
+	 *	Master listen active message from slave
+	 */
+	private static class SlaveListener extends Thread {
+		@SuppressWarnings("resource")
+		public void run() {
+			ServerSocket serverSock = null;
+			try {
+				serverSock = new ServerSocket(Constants.SlaveActivePort);
+			} catch (IOException e) {
+				System.out.println("Master Listener Socket cannot be openned");
+				System.exit(0);
+			}
+			
+			while (true) {
+				try {
+					Socket sock = serverSock.accept();
+					// listen if one slave quit, send back quit message
+					// and remove it from slavePool
+					Message msg;
+					if ((msg = Message.receive(sock, null, -1)).getType() == 
+							Message.MSG_TYPE.SLAVE_QUIT) {
+						msg.send(sock, null, -1);
+						slavePool.remove(sock.getRemoteSocketAddress());
+					} else {
+						throw new IOException();
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
 	}
 }

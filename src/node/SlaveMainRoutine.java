@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 
+import socket.Message;
 import util.Constants;
 
 /**
@@ -44,5 +45,24 @@ public class SlaveMainRoutine {
                 e.printStackTrace();
             }
         }
+        
+        //send quit message to master
+        try {
+			Socket quitSock = new Socket(Constants.MasterIp, Constants.SlaveActivePort);
+			Message msg = new Message(Message.MSG_TYPE.SLAVE_QUIT, null);
+			quitSock.setSoTimeout(Constants.RegularTimout);
+			msg.send(quitSock, null, -1);
+			if (Message.receive(quitSock, null, -1).getType() != Message.MSG_TYPE.SLAVE_QUIT) {
+				throw new Exception();
+			}
+			
+			quitSock.close();
+			if (!slaveSock.isClosed()) {
+				slaveSock.close();
+			}
+		} catch (Exception e) {
+			System.out.println("Salve Quit Problem");
+		}
+        System.exit(0);
 	}
 }

@@ -14,10 +14,18 @@ public class Constants {
 	public static int FiledispatchPort;
 	//timeout time when client download a file
 	public static int FileDownloadTimeout;
+	//the time out value for regular communication
+	public static int RegularTimout;
 	//the port the master running on
 	public static int MainRoutingPort;
 	//the ip address of the master
 	public static String MasterIp;
+	//the number of mapper
+	public static int IdealMapperNum;
+	//the number of reducer
+	public static int IdealReducerNum;
+	//the port that slave actively send msg to master
+	public static int SlaveActivePort;
 	
 	/**
 	 * Initialized parameters
@@ -58,6 +66,10 @@ public class Constants {
 			FiledispatchPort = Integer.parseInt(args.get("FiledispatchPort"));
 			MainRoutingPort = Integer.parseInt(args.get("MainRoutingPort"));
 			FileDownloadTimeout = Integer.parseInt(args.get("FileDownloadTimeout"));
+			IdealMapperNum = Integer.parseInt(args.get("IdealMapperNum"));
+			IdealReducerNum = Integer.parseInt(args.get("IdealReducerNum"));
+			SlaveActivePort = Integer.parseInt(args.get("SlaveActivePort"));
+			RegularTimout = Integer.parseInt(args.get("RegularTimout"));
 
 			MasterIp = args.get("MasterIp");
 			if (MasterIp == null) {

@@ -1,5 +1,14 @@
-FiledispatchPort=10160
-MainRoutingPort=10161
+//Socket Configuration
+MainRoutingPort=10160
+FiledispatchPort=10161
+SlaveActivePort=10162
 MasterIp=localhost
 
-FileDownloadTimeout=5000
+//Network Configuration
+FileDownloadTimeout=20000
+RegularTimout=50000
+
+//Rule Configuration
+IdealMapperNum=2
+IdealReducerNum=2
+

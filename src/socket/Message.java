@@ -19,7 +19,7 @@ public class Message implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static enum MSG_TYPE {
-        FILE_SPLIT_REQ, FILE_SPLIT_ACK
+        FILE_SPLIT_REQ, FILE_SPLIT_ACK, SLAVE_QUIT
     }
     
     //fields
