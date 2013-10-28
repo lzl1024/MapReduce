@@ -5,10 +5,10 @@ all:
 	node/*.java socket/*.java util/*.java
 	
 master: all
-	java -cp .:lib/http-20070405.jar node.Master ${ConfigFile}
+	java -cp .:lib/http-20070405.jar node.MasterMain ${ConfigFile}
 
 slave: all
-	java -cp .:lib/http-20070405.jar node.SlaveMainRoutine ${ConfigFile}
+	java -cp .:lib/http-20070405.jar node.SlaveMain ${ConfigFile}
 
 clean:
 	find . -name *.class | xargs rm -rf >> a.out

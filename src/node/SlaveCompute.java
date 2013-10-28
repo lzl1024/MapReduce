@@ -33,8 +33,13 @@ public class SlaveCompute extends Thread {
 
 			switch (msgIn.getType()) {
 			case FILE_SPLIT_REQ:
+			//get the file split name, download the split and send ack back
 				getFileSplit((String) msgIn.getContent());
 				msgOut = new Message(Message.MSG_TYPE.FILE_SPLIT_ACK, null);
+				break;
+			case KEEP_ALIVE:
+			//Keep alive poll, send the message back
+				msgIn.send(sockToMaster, null, -1);
 				break;
 			default:
 				break;
@@ -55,6 +60,5 @@ public class SlaveCompute extends Thread {
 		String masterUrl = Constants.HTTP_PREFIX + Constants.MasterIp + ":"
 				+ Constants.FiledispatchPort + "/" + splitName;
 		FileTransmitServer.httpDownload(masterUrl, splitName);
-
 	}
 }
