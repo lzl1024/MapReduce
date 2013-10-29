@@ -1,7 +1,18 @@
 package node;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketAddress;
+import java.util.ArrayList;
+import java.util.HashMap;
 
+import mapreduce.MapperPerform;
+import mapreduce.ReducerPerform;
 import socket.MapperAckMsg;
 import socket.Message;
 import socket.ReducerAckMsg;
@@ -14,6 +25,9 @@ import dfs.FileTransmitServer;
 public class SlaveCompute extends Thread {
 
 	private Socket sockToMaster;
+	// failed reducer task, wait for new reducer to send files
+	// key: socketAddress, value: splitName
+	public static HashMap<SocketAddress, ArrayList<String>> failedCache = new HashMap<SocketAddress, ArrayList<String>>();
 
 	// constructor
 	public SlaveCompute(Socket sockToMaster) {
@@ -40,10 +54,22 @@ public class SlaveCompute extends Thread {
 					msgIn.send(sockToMaster, null, -1);
 					break;
 				case MAPPER_REQ:
-					mapperTask((MapperAckMsg)msgIn.getContent());
+					// Create a thread to perform mapper task
+					new MapperPerform((MapperAckMsg) msgIn.getContent())
+							.start();
 					break;
 				case REDUCER_REQ:
-					reducerTask((ReducerAckMsg)msgIn.getContent());
+					// Create a thread to perform reducer task
+					new ReducerPerform((ReducerAckMsg) msgIn.getContent())
+							.start();
+					break;
+				case NODE_FAIL_ACK:
+					// node repaired
+					recover(msgIn.getContent());
+					break;
+				case FILE_DOWNLOAD:
+					receiveFile((String) msgIn.getContent());
+					break;
 				default:
 					break;
 				}
@@ -57,6 +83,26 @@ public class SlaveCompute extends Thread {
 	}
 
 	/**
+	 * Receive a file split from the remote
+	 * 
+	 * @param content
+	 * @throws IOException 
+	 */
+	private void receiveFile(String fileName) throws IOException {
+		DataInputStream sockData = 
+				new DataInputStream(new BufferedInputStream(sockToMaster.getInputStream()));  
+        DataOutputStream file = 
+        		new DataOutputStream(new BufferedOutputStream(new FileOutputStream(fileName)));  
+		byte[] buf = new byte[Constants.BufferSize];
+		
+		int readNum;    
+        while ((readNum = sockData.read(buf)) != -1) { 
+        	file.write(buf, 0, readNum);    
+        }     
+		file.close();		
+	}
+
+	/**
 	 * get File split from master file system
 	 * 
 	 * @param splitName
@@ -66,22 +112,17 @@ public class SlaveCompute extends Thread {
 				+ Constants.FiledispatchPort + "/" + splitName;
 		FileTransmitServer.httpDownload(masterUrl, splitName);
 	}
-	
-	/**
-	 * Handler reducer task
-	 * @param content
-	 */
-	private void reducerTask(ReducerAckMsg content) {
-		// TODO Auto-generated method stub
-		
-	}
 
 	/**
-	 * Handler mapper task
+	 * fail node recover, check failedCache, send file to new reducer and update
+	 * failedCache (failure may happen again). Also, when update cache, need to
+	 * go through the failedCache to see if no split is here now. if no, send
+	 * MAPPER_COMLETE to info master
+	 * 
 	 * @param content
 	 */
-	private void mapperTask(MapperAckMsg content) {
+	private void recover(Object content) {
 		// TODO Auto-generated method stub
-		
+
 	}
 }

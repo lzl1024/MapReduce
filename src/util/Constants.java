@@ -40,6 +40,8 @@ public class Constants {
 	public static String HTTP_PREFIX = "http://";
 	public static int KEEP_ALIVE_INT = 5000;
 	public static int Random_Base = 1000;
+	public static String Class_PREFIX = "expamles.";
+	public static final int BufferSize = 8196;
 
 	/**
 	 * Parse the configuration file

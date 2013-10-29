@@ -1,9 +1,9 @@
 package mapreduce;
 
 import io.Context;
+import io.IntWritable;
 import io.Text;
-import io.Writable;
 
 public abstract class Mapper{
-    public abstract void map(Writable key, Text value, Context context);
+    public abstract void map(IntWritable key, Text value, Context context);
 }

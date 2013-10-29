@@ -10,16 +10,16 @@ public class SlaveInfo {
 	// the layout of mapper tasks, value is split name
 	private CopyOnWriteArrayList<String> mapperTasks;
 	// the layout of reducer tasks, value is jobID
-	private CopyOnWriteArrayList<String> reducerTasks;
+	private CopyOnWriteArrayList<Integer> reducerTasks;
 	
 	public SlaveInfo(){
 		mapperTasks = new CopyOnWriteArrayList<String>();
-		reducerTasks = new CopyOnWriteArrayList<String>();
+		reducerTasks = new CopyOnWriteArrayList<Integer>();
 	}
 	
 	public SlaveInfo(Socket sock) {
 		mapperTasks = new CopyOnWriteArrayList<String>();
-		reducerTasks = new CopyOnWriteArrayList<String>();
+		reducerTasks = new CopyOnWriteArrayList<Integer>();
 		socket = sock;
 	}
 
@@ -39,11 +39,11 @@ public class SlaveInfo {
 		this.mapperTasks = mapperTasks;
 	}
 
-	public CopyOnWriteArrayList<String> getReducerTasks() {
+	public CopyOnWriteArrayList<Integer> getReducerTasks() {
 		return reducerTasks;
 	}
 
-	public void setReducerTasks(CopyOnWriteArrayList<String> reducerTasks) {
+	public void setReducerTasks(CopyOnWriteArrayList<Integer> reducerTasks) {
 		this.reducerTasks = reducerTasks;
 	}
 

@@ -78,6 +78,10 @@ public class Scheduler extends Thread {
 					JobInfo jobInfo = jobPool.get((Integer) msg.getContent());
 					int remain = jobInfo.getRemainWorks() - 1;
 					jobInfo.setRemainWorks(remain);
+					// update slave pool
+					MasterMain.slavePool.get(sock.getRemoteSocketAddress())
+							.getReducerTasks()
+							.remove(new Integer(jobInfo.getJob().getJobID()));
 
 					// complete the whole work
 					if (remain == 0) {
@@ -85,7 +89,19 @@ public class Scheduler extends Thread {
 								jobInfo.getJob());
 						new Message(Message.MSG_TYPE.WORK_COMPELETE, null)
 								.send(jobInfo.getSock(), null, -1);
-					}
+					}					
+					new Message(MSG_TYPE.REDUCER_COMPLETE, null).send(sock,
+								null, -1);
+					break;
+				// one mapper complete the work
+				case MAPPER_COMPLETE:
+					// update file layout and slavePool
+					MasterMain.slavePool.get(sock.getRemoteSocketAddress())
+							.getMapperTasks().remove((String) msg.getContent());
+					FileSplit.splitLayout.get(sock.getRemoteSocketAddress())
+							.remove((String) msg.getContent());
+					new Message(MSG_TYPE.MAPPER_COMPLETE, null).send(sock,
+							null, -1);
 					break;
 				default:
 					throw new IOException();
@@ -94,18 +110,6 @@ public class Scheduler extends Thread {
 				e.printStackTrace();
 			}
 		}
-	}
-
-	/**
-	 * concatenate reducer output files
-	 * 
-	 * @param outSplitName
-	 * @param job
-	 */
-	private void concatOutFile(ArrayList<String> outSplitName, Job job) {
-		System.out.println(outSplitName);
-		// TODO Auto-generated method stub
-
 	}
 
 	/**
@@ -167,6 +171,8 @@ public class Scheduler extends Thread {
 				if (!takedSock.contains(sock)) {
 					inviteMapper(sock, job, reducerList, entry.getKey());
 					takedSock.add(sock);
+					// update slave info
+
 					flag = true;
 					break;
 				}
@@ -198,6 +204,9 @@ public class Scheduler extends Thread {
 				job.getReducerClass());
 		try {
 			new Message(MSG_TYPE.REDUCER_REQ, msg).send(socket, null, -1);
+			// update slave info
+			MasterMain.slavePool.get(socket.getRemoteSocketAddress())
+					.getReducerTasks().add(job.getJobID());
 		} catch (Exception e) {
 			System.out.println("Invite reducer failed");
 			ArrayList<SocketAddress> tmp = new ArrayList<SocketAddress>();
@@ -221,12 +230,28 @@ public class Scheduler extends Thread {
 		Socket socket = MasterMain.slavePool.get(sock).getSocket();
 		try {
 			new Message(MSG_TYPE.MAPPER_REQ, msg).send(socket, null, -1);
+			// update slave info
+			MasterMain.slavePool.get(socket.getRemoteSocketAddress())
+					.getMapperTasks().add(splitName);
 		} catch (Exception e) {
 			System.out.println("Invite mapper failed");
 			ArrayList<SocketAddress> tmp = new ArrayList<SocketAddress>();
 			tmp.add(socket.getRemoteSocketAddress());
 			MasterMain.handleLeave(tmp);
 		}
+
+	}
+	
+	/**
+	 * concatenate reducer output files, send output files to
+	 * user and delete all the file split in file system
+	 * 
+	 * @param outSplitName
+	 * @param job
+	 */
+	private void concatOutFile(ArrayList<String> outSplitName, Job job) {
+		System.out.println(outSplitName);
+		// TODO Auto-generated method stub
 
 	}
 }

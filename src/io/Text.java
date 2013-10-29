@@ -1,12 +1,10 @@
 package io;
 
-import java.io.InputStream;
-import java.io.OutputStream;
 
-public class Text implements Writable{
+public class Text implements Writable<String>{
     
     /**
-     * 
+     * String Wrapper in MapReduce
      */
     private static final long serialVersionUID = 1L;
     private String field;
@@ -16,20 +14,22 @@ public class Text implements Writable{
     }
 
     @Override
-    public void write(OutputStream output) {
-        // TODO Auto-generated method stub
-        
-    }
-
-    @Override
-    public void readFields(InputStream in) {
-        // TODO Auto-generated method stub
-        
-    }
-
-    @Override
-    public Object get() {
+    public String get() {
         return field;
     }
 
+	@Override
+	public void set(String fields) {
+		this.field = fields;
+	}
+
+	@Override
+	public void parse(String fields) {
+		this.field = fields;
+	}
+
+	@Override
+	public int hashCode() {
+		return field.hashCode();
+	}
 }

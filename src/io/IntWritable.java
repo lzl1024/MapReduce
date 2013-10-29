@@ -1,38 +1,35 @@
 package io;
 
-import java.io.InputStream;
-import java.io.OutputStream;
 
-
-public class IntWritable implements Writable {
+public class IntWritable implements Writable<Integer> {
 
     /**
-     * 
+     * Integer wrapper in map Reduce
      */
     private static final long serialVersionUID = 1L;
-    private int field;
+    private Integer field;
 
-    public IntWritable(int field){
+    public IntWritable(Integer field){
         this.field = field;
     }
 
     @Override
-    public void write(OutputStream output) {
-        // TODO Auto-generated method stub
-        
-    }
-
-
-    @Override
-    public void readFields(InputStream in) {
-        // TODO Auto-generated method stub
-        
-    }
-
-
-    @Override
-    public Object get() {
+    public Integer get() {
         return field;
     }
 
+    @Override
+    public void set(Integer field) {
+    	this.field = field;
+    }
+
+	@Override
+	public void parse(String fields) {
+		field = Integer.parseInt(fields.trim());
+	}
+	
+	@Override
+	public int hashCode() {
+		return field.hashCode();
+	}
 }

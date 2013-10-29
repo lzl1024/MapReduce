@@ -11,7 +11,7 @@ public class MapperAckMsg implements Serializable {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private ArrayList<SocketAddress> reudcerList;
+	private ArrayList<SocketAddress> reducerList;
 	private String mapperClass;
 	private String splitName;
 
@@ -19,15 +19,15 @@ public class MapperAckMsg implements Serializable {
 			ArrayList<SocketAddress> reducerList) {
 		this.splitName = splitName;
 		this.mapperClass = mapperClass;
-		this.reudcerList = reducerList;
+		this.reducerList = reducerList;
 	}
 
 	public ArrayList<SocketAddress> getReudcerList() {
-		return reudcerList;
+		return reducerList;
 	}
 
 	public void setReudcerList(ArrayList<SocketAddress> reudcerList) {
-		this.reudcerList = reudcerList;
+		this.reducerList = reudcerList;
 	}
 
 	public String getMapperClass() {
@@ -45,5 +45,4 @@ public class MapperAckMsg implements Serializable {
 	public void setSplitName(String splitName) {
 		this.splitName = splitName;
 	}
-
 }

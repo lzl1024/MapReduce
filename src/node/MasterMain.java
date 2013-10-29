@@ -108,7 +108,7 @@ public class MasterMain {
 	 * Handle Failure or Quit situation 1. For workers mapper work: each work
 	 * select other proper node to do first check node with the file split. Then
 	 * change 2. For workers reduce work: find another node, and announce
-	 * everyone the replacer in the content of NODE_FAIL message
+	 * everyone the replacer and the original one in the content of NODE_FAIL_ACK message
 	 * 
 	 * @param content
 	 */

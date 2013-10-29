@@ -14,10 +14,10 @@ import mapreduce.Reducer;
 public class Exp1WordCountReducer extends Reducer {
 
     @Override
-    public void reduce(Text key, Iterable<Writable> values, Context context) {
+    public void reduce(Text key, Iterable<Writable<?>> values, Context context) {
         int wordCount = 0;
-        for (Writable value : values) {
-            wordCount += (Integer)value.get();
+        for (Writable<?> value : values) {
+            wordCount += ((IntWritable)value).get();
         }
         
         context.write(key, new IntWritable(wordCount));
