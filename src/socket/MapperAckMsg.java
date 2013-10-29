@@ -15,6 +15,13 @@ public class MapperAckMsg implements Serializable {
 	private String mapperClass;
 	private String splitName;
 
+	public MapperAckMsg(String splitName, String mapperClass,
+			ArrayList<SocketAddress> reducerList) {
+		this.splitName = splitName;
+		this.mapperClass = mapperClass;
+		this.reudcerList = reducerList;
+	}
+
 	public ArrayList<SocketAddress> getReudcerList() {
 		return reudcerList;
 	}

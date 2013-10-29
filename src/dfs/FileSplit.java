@@ -147,7 +147,7 @@ public class FileSplit {
 
 					// too many free mappers fail!
 					if (freeMappers.size() < replFac) {
-						throw new Exception("The Whole Job Fails");
+						throw new Exception("Mapper not enough, the Whole Job Fails");
 					}
 				}
 			}

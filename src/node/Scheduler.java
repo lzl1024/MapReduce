@@ -12,7 +12,10 @@ import java.util.Map.Entry;
 
 import mapreduce.Job;
 import mapreduce.JobInfo;
+import socket.MapperAckMsg;
 import socket.Message;
+import socket.Message.MSG_TYPE;
+import socket.ReducerAckMsg;
 import util.Constants;
 import dfs.FileSplit;
 
@@ -50,15 +53,20 @@ public class Scheduler extends Thread {
 				// mapper will find its reducer fail, master handles the fail
 				// send back fail_ack
 				case NODE_FAIL:
-					new Message(Message.MSG_TYPE.NODE_FAIL_ACK, null).send(
-							sock, null, -1);
-					MasterMain.handleLeave((ArrayList<SocketAddress>) msg
-							.getContent());
+					ArrayList<SocketAddress> content = (ArrayList<SocketAddress>) msg
+							.getContent();
+					try {
+						new Message(Message.MSG_TYPE.NODE_FAIL_ACK, null).send(
+								sock, null, -1);
+					} catch (Exception e) {
+						content.add(sock.getRemoteSocketAddress());
+					}
+					MasterMain.handleLeave(content);
 					break;
 				// new Job comes
 				case NEW_JOB:
 					try {
-						handleJob((Job) msg.getContent(), sock);						
+						handleJob((Job) msg.getContent(), sock);
 					} catch (Exception e) {
 						e.printStackTrace();
 						new Message(Message.MSG_TYPE.WORK_FAIL, null).send(
@@ -67,35 +75,44 @@ public class Scheduler extends Thread {
 					break;
 				// one reducer complete the work
 				case REDUCER_COMPLETE:
-					JobInfo jobInfo = jobPool.get((Integer)msg.getContent());
+					JobInfo jobInfo = jobPool.get((Integer) msg.getContent());
 					int remain = jobInfo.getRemainWorks() - 1;
 					jobInfo.setRemainWorks(remain);
-					
-					//complete the whole work
+
+					// complete the whole work
 					if (remain == 0) {
-						concatOutFile(jobInfo.getOutSplitName(), jobInfo.getJob());
+						concatOutFile(jobInfo.getOutSplitName(),
+								jobInfo.getJob());
 						new Message(Message.MSG_TYPE.WORK_COMPELETE, null)
-						.send(jobInfo.getSock(), null, -1);
+								.send(jobInfo.getSock(), null, -1);
 					}
 					break;
 				default:
 					throw new IOException();
 				}
-			} catch (IOException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 	}
 
+	/**
+	 * concatenate reducer output files
+	 * 
+	 * @param outSplitName
+	 * @param job
+	 */
 	private void concatOutFile(ArrayList<String> outSplitName, Job job) {
+		System.out.println(outSplitName);
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	/**
 	 * Handle a mapreduce Job include schedule the mapper and reducer, execute
 	 * mapreduce facility
-	 * @param sock 
+	 * 
+	 * @param sock
 	 * 
 	 * @param content
 	 */
@@ -111,8 +128,10 @@ public class Scheduler extends Thread {
 		ArrayList<Socket> freeMappers = new ArrayList<Socket>();
 
 		int i = 0;
-		while (slaveList.get(i).getMapperTasks().size() <= Constants.IdealMapperJobs) {
+		while (i < slaveList.size()
+				&& slaveList.get(i).getMapperTasks().size() <= Constants.IdealMapperJobs) {
 			freeMappers.add(slaveList.get(i).getSocket());
+			i++;
 		}
 
 		// split files
@@ -129,7 +148,13 @@ public class Scheduler extends Thread {
 
 		// schedule reducers
 		ArrayList<SocketAddress> reducerList = new ArrayList<SocketAddress>();
-		// Collections.sort(s)
+		Collections.sort(slaveList, new SlaveInfo.ReducerPrio());
+		for (i = 0; i < Constants.IdealReducerNum && i < slaveList.size(); i++) {
+			reducerList.add(slaveList.get(i).getSocket()
+					.getRemoteSocketAddress());
+			inviteReducer(slaveList.get(i).getSocket(),
+					Constants.IdealMapperNum, job);
+		}
 
 		// schedule mappers
 		HashSet<SocketAddress> takedSock = new HashSet<SocketAddress>();
@@ -160,9 +185,48 @@ public class Scheduler extends Thread {
 		jobPool.put(job.getJobID(), jobInfo);
 	}
 
+	/**
+	 * add a reducer task
+	 * 
+	 * @param socket
+	 * 
+	 * @param idealMapperNum
+	 * @param job
+	 */
+	private void inviteReducer(Socket socket, int idealMapperNum, Job job) {
+		ReducerAckMsg msg = new ReducerAckMsg(idealMapperNum,
+				job.getReducerClass());
+		try {
+			new Message(MSG_TYPE.REDUCER_REQ, msg).send(socket, null, -1);
+		} catch (Exception e) {
+			System.out.println("Invite reducer failed");
+			ArrayList<SocketAddress> tmp = new ArrayList<SocketAddress>();
+			tmp.add(socket.getRemoteSocketAddress());
+			MasterMain.handleLeave(tmp);
+		}
+	}
+
+	/**
+	 * add a mapper task
+	 * 
+	 * @param sock
+	 * @param job
+	 * @param reducerList
+	 * @param splitName
+	 */
 	private void inviteMapper(SocketAddress sock, Job job,
-			ArrayList<SocketAddress> reducerList, String key) {
-		// TODO Auto-generated method stub
+			ArrayList<SocketAddress> reducerList, String splitName) {
+		MapperAckMsg msg = new MapperAckMsg(splitName, job.getMapperClass(),
+				reducerList);
+		Socket socket = MasterMain.slavePool.get(sock).getSocket();
+		try {
+			new Message(MSG_TYPE.MAPPER_REQ, msg).send(socket, null, -1);
+		} catch (Exception e) {
+			System.out.println("Invite mapper failed");
+			ArrayList<SocketAddress> tmp = new ArrayList<SocketAddress>();
+			tmp.add(socket.getRemoteSocketAddress());
+			MasterMain.handleLeave(tmp);
+		}
 
 	}
 }

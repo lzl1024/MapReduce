@@ -12,6 +12,11 @@ public class ReducerAckMsg implements Serializable {
 	private int mapperNum;
 	private String ReducerClass;
 	
+	public ReducerAckMsg(int mapperNum, String ReducerClass) {
+		this.mapperNum = mapperNum;
+		this.ReducerClass = ReducerClass;
+	}
+
 	public int getMapperNum() {
 		return mapperNum;
 	}
