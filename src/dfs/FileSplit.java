@@ -49,7 +49,7 @@ public class FileSplit {
 
 		// get split names
 		for (int i = 1; i <= replNum; i++) {
-			splitNames[i - 1] = jobID + "_" + fileName + i;
+			splitNames[i - 1] = jobID + "_" + fileName + "_" + i;
 			pwList[i - 1] = new PrintWriter(new FileWriter(splitNames[i - 1]),
 					true);
 		}
