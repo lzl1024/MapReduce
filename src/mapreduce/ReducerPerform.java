@@ -31,7 +31,10 @@ public class ReducerPerform extends Thread {
             }
         }
 
+        // sort the record in each file
+        
         // merge the record in fileNames and perform reduce function 
+        
         // transmit file to master
     }
 }
