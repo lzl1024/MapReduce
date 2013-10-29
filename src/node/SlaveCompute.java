@@ -123,6 +123,6 @@ public class SlaveCompute extends Thread {
 	 */
 	private void recover(Object content) {
 		// TODO Auto-generated method stub
-
+		content = content;
 	}
 }

@@ -114,6 +114,7 @@ public class MasterMain {
 	 */
 	public static void handleLeave(ArrayList<SocketAddress> removeList) {
 		// TODO reschedule its works
+		removeList = removeList;
 
 		// delete the slave from pool
 		for (SocketAddress add : removeList) {

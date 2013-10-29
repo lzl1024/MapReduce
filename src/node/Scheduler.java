@@ -251,7 +251,6 @@ public class Scheduler extends Thread {
 	 */
 	private void concatOutFile(ArrayList<String> outSplitName, Job job) {
 		System.out.println(outSplitName);
-		// TODO Auto-generated method stub
-
+		outSplitName = outSplitName;
 	}
 }
