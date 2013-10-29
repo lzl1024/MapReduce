@@ -3,6 +3,8 @@ package socket;
 import java.io.Serializable;
 import java.util.ArrayList;
 
+import util.Constants;
+
 import mapreduce.Job;
 
 public class ReducerAckMsg implements Serializable {
@@ -22,8 +24,8 @@ public class ReducerAckMsg implements Serializable {
 
         this.fileNames = new ArrayList<String>();
         for (int i = 1; i <= mapperNum; i++) {
-            this.fileNames.add(job.getJobID() + "_" + job.getInputFile() + "_"
-                    + i + "_" + index);
+            this.fileNames.add(Constants.FS_LOCATION + job.getJobID() + "_"
+                    + job.getInputFile() + "_" + i + "_" + index);
         }
     }
 
