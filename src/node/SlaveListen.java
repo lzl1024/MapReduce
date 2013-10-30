@@ -37,9 +37,6 @@ public class SlaveListen extends Thread {
 					System.out.println("type is not FILE_DOWNLOAD.");
 				}
 				sock.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

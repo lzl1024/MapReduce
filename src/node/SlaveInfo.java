@@ -27,20 +27,18 @@ public class SlaveInfo {
 		reducerTasks = new CopyOnWriteArrayList<Integer>();
 		socket = sock;
 	}
-	public SlaveInfo(Socket sock, int port) {
+
+	public SlaveInfo(Socket sock, int port) throws IOException {
 		mapperTasks = new CopyOnWriteArrayList<String>();
 		reducerTasks = new CopyOnWriteArrayList<Integer>();
 		socket = sock;
 		this.port = port;
 		Socket tmpSock;
-		try {
-			tmpSock = new Socket(socket.getInetAddress(), port);
-			this.sockAddr = tmpSock.getRemoteSocketAddress();
-			tmpSock.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+
+		tmpSock = new Socket(socket.getInetAddress(), port);
+		this.sockAddr = tmpSock.getRemoteSocketAddress();
+		tmpSock.close();
+
 		
 	}
 	

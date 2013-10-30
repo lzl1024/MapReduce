@@ -81,23 +81,22 @@ public class MasterMain {
 			try {
 				sock = serverSock.accept();
 				sock.setSoTimeout(Constants.RegularTimout);
-				slavePool.put(sock.getRemoteSocketAddress(),
-						new SlaveInfo(sock, curPort));
+
 				new Message(MSG_TYPE.NOTIFY_PORT, curPort).send(sock, null, -1);
 				curPort ++;
 				if(curPort > Constants.endPort) {
 					System.out.println("Port pool used up.");
+					System.exit(0);
 				}
+				
+				slavePool.put(sock.getRemoteSocketAddress(),
+						new SlaveInfo(sock, curPort));
 				// i++;
 				// if (i == 2)
 				// break;
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.exit(0);
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}
+			} 
 		}
 
 		// // split file, for test
