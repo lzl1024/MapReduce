@@ -15,3 +15,6 @@ IdealMapperJobs=2
 IdealReduderJobs=2
 ReplFac=2
 
+//Port realm
+startPort = 20000
+endPort = 40000

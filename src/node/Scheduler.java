@@ -154,8 +154,7 @@ public class Scheduler extends Thread {
         ArrayList<SocketAddress> reducerList = new ArrayList<SocketAddress>();
         Collections.sort(slaveList, new SlaveInfo.ReducerPrio());
         for (i = 0; i < Constants.IdealReducerNum && i < slaveList.size(); i++) {
-            reducerList.add(slaveList.get(i).getSocket()
-                    .getRemoteSocketAddress());
+            reducerList.add(slaveList.get(i).getSocketAddr());
             inviteReducer(slaveList.get(i).getSocket(),
                     Constants.IdealMapperNum, job, i + 1);
         }

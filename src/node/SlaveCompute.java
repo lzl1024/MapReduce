@@ -67,8 +67,8 @@ public class SlaveCompute extends Thread {
 					// node repaired
 					recover(msgIn.getContent());
 					break;
-				case FILE_DOWNLOAD:
-					receiveFile((String) msgIn.getContent());
+				case NOTIFY_PORT:
+					new SlaveListen((Integer)msgIn.getContent()).start();
 					break;
 				default:
 					break;
@@ -82,25 +82,7 @@ public class SlaveCompute extends Thread {
 		}
 	}
 
-	/**
-	 * Receive a file split from the remote
-	 * 
-	 * @param content
-	 * @throws IOException 
-	 */
-	private void receiveFile(String fileName) throws IOException {
-		DataInputStream sockData = 
-				new DataInputStream(new BufferedInputStream(sockToMaster.getInputStream()));  
-        DataOutputStream file = 
-        		new DataOutputStream(new BufferedOutputStream(new FileOutputStream(fileName)));  
-		byte[] buf = new byte[Constants.BufferSize];
-		
-		int readNum;    
-        while ((readNum = sockData.read(buf)) != -1) { 
-        	file.write(buf, 0, readNum);    
-        }     
-		file.close();		
-	}
+
 
 	/**
 	 * get File split from master file system

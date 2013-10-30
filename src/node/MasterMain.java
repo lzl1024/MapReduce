@@ -8,6 +8,8 @@ import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
+import socket.Message;
+import socket.Message.MSG_TYPE;
 import util.Constants;
 
 import com.sun.net.httpserver.HttpHandler;
@@ -24,9 +26,10 @@ import dfs.FileTransmitServer;
 public class MasterMain {
 	// pool to record the slave socket
 	public static ConcurrentHashMap<SocketAddress, SlaveInfo> slavePool = new ConcurrentHashMap<SocketAddress, SlaveInfo>();
-	
+	public static int curPort = Constants.startPort;
 	public static void main(String[] args) {
 		// fill up the constants
+		
 		try {
 			new Constants(args[0]);
 		} catch (IOException e) {
@@ -79,13 +82,21 @@ public class MasterMain {
 				sock = serverSock.accept();
 				sock.setSoTimeout(Constants.RegularTimout);
 				slavePool.put(sock.getRemoteSocketAddress(),
-						new SlaveInfo(sock));
+						new SlaveInfo(sock, curPort));
+				new Message(MSG_TYPE.NOTIFY_PORT, curPort).send(sock, null, -1);
+				curPort ++;
+				if(curPort > Constants.endPort) {
+					System.out.println("Port pool used up.");
+				}
 				// i++;
 				// if (i == 2)
 				// break;
 			} catch (IOException e) {
 				e.printStackTrace();
 				System.exit(0);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
 

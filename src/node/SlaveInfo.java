@@ -1,6 +1,8 @@
 package node;
 
+import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.util.Comparator;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -11,7 +13,10 @@ public class SlaveInfo {
 	private CopyOnWriteArrayList<String> mapperTasks;
 	// the layout of reducer tasks, value is jobID
 	private CopyOnWriteArrayList<Integer> reducerTasks;
-	
+	//the private port for this slave
+	private int port;
+	//the private socketAddress for communication between slaves
+	private SocketAddress sockAddr;
 	public SlaveInfo(){
 		mapperTasks = new CopyOnWriteArrayList<String>();
 		reducerTasks = new CopyOnWriteArrayList<Integer>();
@@ -22,7 +27,23 @@ public class SlaveInfo {
 		reducerTasks = new CopyOnWriteArrayList<Integer>();
 		socket = sock;
 	}
-
+	public SlaveInfo(Socket sock, int port) {
+		mapperTasks = new CopyOnWriteArrayList<String>();
+		reducerTasks = new CopyOnWriteArrayList<Integer>();
+		socket = sock;
+		this.port = port;
+		Socket tmpSock;
+		try {
+			tmpSock = new Socket(socket.getInetAddress(), port);
+			this.sockAddr = tmpSock.getRemoteSocketAddress();
+			tmpSock.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
 	public Socket getSocket() {
 		return socket;
 	}
@@ -30,7 +51,23 @@ public class SlaveInfo {
 	public void setSocket(Socket socket) {
 		this.socket = socket;
 	}
-
+	
+	public int getPort() {
+		return this.port;
+	}
+	
+	public void setPort(int newPort) {
+		this.port = newPort;
+	}
+	
+	public SocketAddress getSocketAddr() {
+		return this.sockAddr;
+	}
+	
+	public void setSocketAddr(SocketAddress newSockAddr) {
+		this.sockAddr = newSockAddr;
+	}
+	
 	public CopyOnWriteArrayList<String> getMapperTasks() {
 		return mapperTasks;
 	}

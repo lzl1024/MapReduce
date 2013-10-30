@@ -32,6 +32,10 @@ public class Constants {
 	public static int IdealReduderJobs;
 	// the replication factor
 	public static int ReplFac;
+	// the start port 
+	public static int startPort;
+	// the end port
+	public static int endPort;
 
 	/**
 	 * Initialized parameters
@@ -86,7 +90,9 @@ public class Constants {
 			IdealReduderJobs = Integer.parseInt(args.get("IdealReduderJobs"));
 			IdealMapperJobs = Integer.parseInt(args.get("IdealMapperJobs"));
 			ReplFac = Integer.parseInt(args.get("ReplFac"));
-
+			startPort = Integer.parseInt(args.get("startPort"));
+			endPort = Integer.parseInt(args.get("endPort"));
+			
 			MasterIp = args.get("MasterIp");
 			if (MasterIp == null) {
 				throw new Exception();
