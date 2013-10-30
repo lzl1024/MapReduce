@@ -17,10 +17,18 @@ public class ReducerAckMsg implements Serializable {
     private int mapperNum;
     private String ReducerClass;
     private ArrayList<String> fileNames;
+    private int jobID;
+    private int index;
+    private Class<?> reduceKey;
+    private Class<?> reduceValue;
 
     public ReducerAckMsg(int mapperNum, Job job, int index) {
         this.mapperNum = mapperNum;
         this.ReducerClass = job.getReducerClass();
+        this.jobID = job.getJobID();
+        this.index = index;
+        this.reduceKey = job.getReducerKeyClass();
+        this.reduceValue = job.getReducerValueClass();
 
         this.fileNames = new ArrayList<String>();
         for (int i = 1; i <= mapperNum; i++) {
@@ -47,5 +55,37 @@ public class ReducerAckMsg implements Serializable {
 
     public ArrayList<String> getfileNames() {
         return this.fileNames;
+    }
+
+    public int getJobID() {
+        return jobID;
+    }
+
+    public void setJobID(int jobID) {
+        this.jobID = jobID;
+    }
+    
+    public int getIndex() {
+        return index;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
+    }
+
+    public Class<?> getReduceKey() {
+        return reduceKey;
+    }
+
+    public void setReduceKey(Class<?> reduceKey) {
+        this.reduceKey = reduceKey;
+    }
+
+    public Class<?> getReduceValue() {
+        return reduceValue;
+    }
+
+    public void setReduceValue(Class<?> reduceValue) {
+        this.reduceValue = reduceValue;
     }
 }

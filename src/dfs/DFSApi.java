@@ -6,20 +6,16 @@ package dfs;
  * 
  */
 public class DFSApi {
-    
-    /**
-     * put file from 
-     * @param fileName
-     */
-    void put(String fileName) {
+
+    public static void put(String fileName) {
 
     }
 
-    void get(String fileName) {
+    public static void get(String fileName) {
 
     }
 
-    void delete(String fileName) {
+    public static void delete(String fileName) {
 
     }
 
