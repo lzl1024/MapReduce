@@ -1,6 +1,5 @@
 package io;
 
-
 public class IntWritable implements Writable<Integer> {
 
     /**
@@ -9,7 +8,10 @@ public class IntWritable implements Writable<Integer> {
     private static final long serialVersionUID = 1L;
     private Integer field;
 
-    public IntWritable(Integer field){
+    public IntWritable() {
+    }
+
+    public IntWritable(Integer field) {
         this.field = field;
     }
 
@@ -20,16 +22,16 @@ public class IntWritable implements Writable<Integer> {
 
     @Override
     public void set(Integer field) {
-    	this.field = field;
+        this.field = field;
     }
 
-	@Override
-	public void parse(String fields) {
-		field = Integer.parseInt(fields.trim());
-	}
-	
-	@Override
-	public int hashCode() {
-		return field.hashCode();
-	}
+    @Override
+    public void parse(String fields) {
+        field = Integer.parseInt(fields.trim());
+    }
+
+    @Override
+    public int hashCode() {
+        return field.hashCode();
+    }
 }

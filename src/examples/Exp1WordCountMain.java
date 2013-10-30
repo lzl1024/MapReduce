@@ -1,5 +1,7 @@
 package examples;
 
+import io.IntWritable;
+import io.Text;
 import mapreduce.Job;
 
 public class Exp1WordCountMain {
@@ -18,6 +20,8 @@ public class Exp1WordCountMain {
 		
 		job.setMapperClass("Exp1WordCountMapper");
 		job.setReducerClass("Exp1WordCountReducer");
+		job.setReducerKeyClass(Text.class);
+		job.setReducerValueClass(IntWritable.class);
 		
 		try {
 			job.waitForCompletion(args[0]);

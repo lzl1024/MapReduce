@@ -85,7 +85,7 @@ public class Scheduler extends Thread {
 
                     // complete the whole work
                     if (remain == 0) {
-                        concatOutFile(jobInfo.getOutSplitName(),
+                        deleteFile(jobInfo.getOutSplitName(),
                                 jobInfo.getJob());
                         new Message(Message.MSG_TYPE.WORK_COMPELETE, null)
                                 .send(jobInfo.getSock(), null, -1);
@@ -244,14 +244,14 @@ public class Scheduler extends Thread {
     }
 
     /**
-     * concatenate reducer output files, send output files to user and delete
-     * all the file split in file system
+     * delete all the file split in file system
      * 
      * @param outSplitName
      * @param job
      */
-    private void concatOutFile(ArrayList<String> outSplitName, Job job) {
+    private void deleteFile(ArrayList<String> outSplitName, Job job) {
         System.out.println(outSplitName);
         outSplitName = outSplitName;
+        //TODO: we can do this as soon as work is done.
     }
 }
