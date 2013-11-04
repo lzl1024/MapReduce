@@ -29,7 +29,7 @@ public class SlaveCompute extends Thread {
 	// failed reducer task, wait for new reducer to send files
 	// key: socketAddress, value: splitName
 	public static HashMap<SocketAddress, ArrayList<String>> failedCache = new HashMap<SocketAddress, ArrayList<String>>();
-	public ArrayList<Thread> mapperThreadList = new ArrayList<Thread>();
+	public static ArrayList<Thread> mapperThreadList = new ArrayList<Thread>();
 	// constructor
 	public SlaveCompute(Socket sockToMaster) {
 		this.sockToMaster = sockToMaster;
@@ -73,7 +73,7 @@ public class SlaveCompute extends Thread {
 					new SlaveListen((Integer)msgIn.getContent()).start();
 					break;
 				case CHANGE_REDUCELIST:
-					ChangeAllReduceLists((ChangeReduceMsg)msgIn.getContent());
+					new SlaveChangeReduce((ChangeReduceMsg)msgIn.getContent()).start();
 				default:
 					break;
 				}
@@ -85,22 +85,7 @@ public class SlaveCompute extends Thread {
 			System.out.println(msgIn.getType() + " :handle success");
 		}
 	}
-	/**
-	 * replace all the old socketAddress with new one
-	 * @param msgContent
-	 */
-	private void ChangeAllReduceLists(ChangeReduceMsg msgContent) {
-		if(msgContent != null) {
-			SocketAddress oldSocketAddr = msgContent.getOld();
-			SocketAddress newSocketAddr = msgContent.getNew();
-			for(int i = 0;i < this.mapperThreadList.size();i ++) {
-				MapperPerform newMapper = (MapperPerform)this.mapperThreadList.get(i);
-				ArrayList<SocketAddress> list = newMapper.getReduceList();
-				int index = list.indexOf(oldSocketAddr);
-				list.set(index, newSocketAddr);
-			}
-		}
-	}
+
 
 	/**
 	 * get File split from master file system
