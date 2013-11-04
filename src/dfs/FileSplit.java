@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import node.MasterMain;
+import node.SlaveListen;
 import socket.Message;
 import util.Constants;
 
@@ -46,7 +47,7 @@ public class FileSplit {
 		if (!file.exists()) {
 			throw new IOException("File cannot found");
 		}
-
+		
 		// get split names
 		for (int i = 1; i <= replNum; i++) {
 			splitNames[i - 1] = jobID + "_" + fileName + "_" + i;

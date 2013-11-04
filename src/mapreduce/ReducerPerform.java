@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.PriorityQueue;
 
+import node.SlaveListen;
+
 import socket.ReducerAckMsg;
 import util.Constants;
 import dfs.DFSApi;
@@ -64,7 +66,8 @@ public class ReducerPerform extends Thread {
 
     public void run() {
         // get the file Names and sort its record
-        for (int i = 0; i < fileNames.size(); i++) {
+    	   	
+        for(int i = 0; i < fileNames.size(); i++) {
             try {
                 FileReader fd = new FileReader(fileNames.get(i));
                 BufferedReader reader = new BufferedReader(fd);

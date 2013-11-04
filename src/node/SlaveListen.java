@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
 
 import socket.Message;
 import socket.Message.MSG_TYPE;
@@ -31,7 +32,16 @@ public class SlaveListen extends Thread {
 				sock = ListenSocket.accept();
 				Message msgIn = Message.receive(sock, null, -1);
 				if(msgIn.getType() == MSG_TYPE.FILE_DOWNLOAD) {
-					receiveFile((String) msgIn.getContent(), sock);
+					String receiveFileName = (String) msgIn.getContent();
+					receiveFile(receiveFileName, sock);
+					String[] array = receiveFileName.split("_");
+					int jobId = Integer.parseInt(array[0]);
+					SlaveCompute.fileLeftMap.put(jobId, SlaveCompute.fileLeftMap.get(jobId) - 1);
+					if(SlaveCompute.fileLeftMap.get(jobId) == 0) {
+						SlaveCompute.waitingThreadMap.get(jobId).start();
+						SlaveCompute.waitingThreadMap.remove(jobId);
+						SlaveCompute.fileLeftMap.remove(jobId);
+					}
 				}
 				else {
 					System.out.println("type is not FILE_DOWNLOAD.");

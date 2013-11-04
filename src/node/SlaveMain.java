@@ -38,7 +38,7 @@ public class SlaveMain {
 		}
 
 		new SlaveCompute(slaveSock).start();
-
+		new SlaveListen(MasterMain.curPort).start();
 		String cmdInput = "";
 		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 		// usage

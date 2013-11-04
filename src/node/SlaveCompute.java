@@ -30,6 +30,8 @@ public class SlaveCompute extends Thread {
 	// key: socketAddress, value: splitName
 	public static HashMap<SocketAddress, ArrayList<String>> failedCache = new HashMap<SocketAddress, ArrayList<String>>();
 	public static ArrayList<Thread> mapperThreadList = new ArrayList<Thread>();
+	public static HashMap<Integer, Thread> waitingThreadMap = new HashMap<Integer, Thread>();
+	public static HashMap<Integer, Integer> fileLeftMap = new HashMap<Integer, Integer>();
 	// constructor
 	public SlaveCompute(Socket sockToMaster) {
 		this.sockToMaster = sockToMaster;
@@ -62,8 +64,11 @@ public class SlaveCompute extends Thread {
 					break;
 				case REDUCER_REQ:
 					// Create a thread to perform reducer task
-					new ReducerPerform((ReducerAckMsg) msgIn.getContent())
-							.start();
+					ReducerAckMsg msgContent = (ReducerAckMsg) msgIn.getContent();
+					int jobID = msgContent.getJobID();
+					Thread newReducer = new ReducerPerform(msgContent);
+					waitingThreadMap.put(jobID, newReducer);
+					fileLeftMap.put(jobID, msgContent.getfileNames().size());
 					break;
 				case NODE_FAIL_ACK:
 					// node repaired

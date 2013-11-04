@@ -8,7 +8,7 @@ public class Exp1WordCountMain {
 
 	public static void main(String[] args){
 		if (args.length != 2) {
-			System.out.println("Useage: Exp1WordCountMain <input path> <output path>");
+			System.out.println("Useage: Exp1WordCountMain <config file> <input path> <output path>");
 			System.exit(1);
 		}
 		
