@@ -66,6 +66,8 @@ public class Scheduler extends Thread {
                 // new Job comes
                 case NEW_JOB:
                     try {
+                    	System.out.println("msg Content is :" + ((Job)msg.getContent()).getJobID() + "  Mapper class is" + 
+                    			((Job)msg.getContent()).getMapperClass());
                         handleJob((Job) msg.getContent(), sock);
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -135,9 +137,11 @@ public class Scheduler extends Thread {
         while (i < slaveList.size()
                 && slaveList.get(i).getMapperTasks().size() <= Constants.IdealMapperJobs) {
             freeMappers.add(slaveList.get(i).getSocket());
+            System.out.println("free Mapper is " + slaveList.get(i).getSocket().getRemoteSocketAddress());
             i++;
+            
         }
-
+        
         // split files
         HashMap<String, ArrayList<SocketAddress>> layout;
         try {
