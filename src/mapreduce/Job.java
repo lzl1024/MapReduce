@@ -28,10 +28,17 @@ public class Job implements Serializable {
     private Class<?> ReducerKeyClass;
     private Class<?> ReducerValueClass;
 
+    public Job() {}
+    public Job(int jobId) {
+    	this.jobID = jobId;
+    }
+    public Job(String mapperClass) {
+    	this.MapperClass = mapperClass;
+    }
     public int getJobID() {
         return jobID;
     }
-
+    
     public void setJobID(int jobID) {
         this.jobID = jobID;
     }

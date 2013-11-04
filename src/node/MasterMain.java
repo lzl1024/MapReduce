@@ -5,9 +5,14 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.security.KeyStore.Entry;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 
+import mapreduce.Job;
+
+import socket.ChangeReduceMsg;
 import socket.Message;
 import socket.Message.MSG_TYPE;
 import util.Constants;
@@ -15,6 +20,7 @@ import util.Constants;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
+import dfs.FileSplit;
 import dfs.FileTransmitServer;
 
 /**
@@ -124,8 +130,51 @@ public class MasterMain {
 	 */
 	public static void handleLeave(ArrayList<SocketAddress> removeList) {
 		// TODO reschedule its works
-		removeList = removeList;
-
+		ArrayList<SlaveInfo> slaveList = new ArrayList<SlaveInfo>(
+                MasterMain.slavePool.values());
+		
+		for(SocketAddress sockAddr : removeList) {
+			//move its reduce jobs to other hosts
+			for(Integer reduceTask :slavePool.get(sockAddr).getReducerTasks()) {
+				Collections.sort(slaveList, new SlaveInfo.ReducerPrio());
+		        int i;
+				for (i = 0; i < slaveList.size(); i++) {
+		        	if(slaveList.get(i).getReducerTasks().size() < Constants.IdealReducerNum) {
+		        		Scheduler.inviteReducer(slaveList.get(i).getSocket(),
+			                    Constants.IdealMapperNum, new Job(reduceTask), i + 1);	
+		        		for(SlaveInfo info : slaveList) {
+		        			Socket sock = info.getSocket();
+		        			ChangeReduceMsg msg = new ChangeReduceMsg(sockAddr, slaveList.get(i).getSocketAddr());
+		        			try {
+								new Message(MSG_TYPE.CHANGE_REDUCELIST, msg).send(sock, null, -1);
+							} catch (Exception e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+		        		}
+		        		break;
+		        	}		            
+		        }
+		        if(i == slaveList.size()) {
+		        	System.out.println("No more reducer available.");
+		        }
+			}
+			//move its map jobs to other hosts
+			for(String fileSplit : slavePool.get(sockAddr).getMapperTasks()) {
+				boolean flag = false;
+				for(java.util.Map.Entry<SocketAddress, ArrayList<String>> entry : FileSplit.splitLayout.entrySet()) {
+					if(entry.getValue().contains(fileSplit)) {
+						Scheduler.inviteMapper(entry.getKey(), new Job(Scheduler.MapperJob.get(fileSplit).getMapperClass()),
+								Scheduler.MapperJob.get(fileSplit).getReudcerList(), fileSplit);	
+						flag = true;
+						break;
+					}
+				}
+				if(!flag) {
+					// TODO: what if no host has this piece of file(no mapper candidate)
+				}
+			}
+		}
 		// delete the slave from pool
 		for (SocketAddress add : removeList) {
 			MasterMain.slavePool.remove(add);

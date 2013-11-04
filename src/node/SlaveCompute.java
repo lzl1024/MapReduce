@@ -13,6 +13,7 @@ import java.util.HashMap;
 
 import mapreduce.MapperPerform;
 import mapreduce.ReducerPerform;
+import socket.ChangeReduceMsg;
 import socket.MapperAckMsg;
 import socket.Message;
 import socket.ReducerAckMsg;
@@ -28,7 +29,7 @@ public class SlaveCompute extends Thread {
 	// failed reducer task, wait for new reducer to send files
 	// key: socketAddress, value: splitName
 	public static HashMap<SocketAddress, ArrayList<String>> failedCache = new HashMap<SocketAddress, ArrayList<String>>();
-
+	public ArrayList<Thread> mapperThreadList = new ArrayList<Thread>();
 	// constructor
 	public SlaveCompute(Socket sockToMaster) {
 		this.sockToMaster = sockToMaster;
@@ -55,8 +56,9 @@ public class SlaveCompute extends Thread {
 					break;
 				case MAPPER_REQ:
 					// Create a thread to perform mapper task
-					new MapperPerform((MapperAckMsg) msgIn.getContent())
-							.start();
+					Thread newMapper = new MapperPerform((MapperAckMsg) msgIn.getContent());
+					this.mapperThreadList.add(newMapper);
+							newMapper.start();
 					break;
 				case REDUCER_REQ:
 					// Create a thread to perform reducer task
@@ -70,6 +72,8 @@ public class SlaveCompute extends Thread {
 				case NOTIFY_PORT:
 					new SlaveListen((Integer)msgIn.getContent()).start();
 					break;
+				case CHANGE_REDUCELIST:
+					ChangeAllReduceLists((ChangeReduceMsg)msgIn.getContent());
 				default:
 					break;
 				}
@@ -81,8 +85,22 @@ public class SlaveCompute extends Thread {
 			System.out.println(msgIn.getType() + " :handle success");
 		}
 	}
-
-
+	/**
+	 * replace all the old socketAddress with new one
+	 * @param msgContent
+	 */
+	private void ChangeAllReduceLists(ChangeReduceMsg msgContent) {
+		if(msgContent != null) {
+			SocketAddress oldSocketAddr = msgContent.getOld();
+			SocketAddress newSocketAddr = msgContent.getNew();
+			for(int i = 0;i < this.mapperThreadList.size();i ++) {
+				MapperPerform newMapper = (MapperPerform)this.mapperThreadList.get(i);
+				ArrayList<SocketAddress> list = newMapper.getReduceList();
+				int index = list.indexOf(oldSocketAddr);
+				list.set(index, newSocketAddr);
+			}
+		}
+	}
 
 	/**
 	 * get File split from master file system

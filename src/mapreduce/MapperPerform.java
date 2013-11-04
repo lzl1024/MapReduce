@@ -127,4 +127,7 @@ public class MapperPerform extends Thread {
 		}
 		return true;
 	}
+	public ArrayList<SocketAddress> getReduceList() {
+		return this.reducerList;
+	}
 }
