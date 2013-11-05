@@ -170,7 +170,7 @@ public class MasterMain {
 			for(String fileSplit : slavePool.get(sockAddr).getMapperTasks()) {
 				boolean flag = false;
 				ArrayList<SocketAddress> sockAddrList = FileSplit.splitLayout.get(fileSplit);
-				//here is a little confused......need to double check
+				//TODO
 				for(SocketAddress e : sockAddrList) {
 					Scheduler.inviteMapper(e, new Job(Scheduler.MapperJob.get(fileSplit).getMapperClass()),
 								Scheduler.MapperJob.get(fileSplit).getReudcerList(), fileSplit);	

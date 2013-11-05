@@ -80,6 +80,10 @@ public class Scheduler extends Thread {
                 case REDUCER_COMPLETE:
 System.out.println("receive a REDUCER_COMPLETE");
 					CompleteMsg comMsg = (CompleteMsg)msg.getContent();
+					ArrayList<SocketAddress> newList = new ArrayList<SocketAddress>();
+					newList.add(comMsg.getSockAddr());
+					FileSplit.splitLayout.put(comMsg.getSplitName(), newList);
+
                     JobInfo jobInfo = jobPool.get(comMsg.getJobID());
                     int remain = jobInfo.getRemainWorks() - 1;
                     jobInfo.setRemainWorks(remain);
@@ -90,9 +94,10 @@ System.out.println("receive a REDUCER_COMPLETE");
 
                     // complete the whole work
                     if (remain == 0) {
+System.out.println(FileSplit.splitLayout);
                         deleteFile(jobInfo.getOutSplitName(),
                                 jobInfo.getJob());
-                        new Message(Message.MSG_TYPE.WORK_COMPELETE, null)
+                        new Message(Message.MSG_TYPE.WORK_COMPELETE, jobInfo.getJob().getJobID())
                                 .send(jobInfo.getSock(), null, -1);
                     }
                     new Message(MSG_TYPE.REDUCER_COMPLETE, null).send(sock,
@@ -106,15 +111,19 @@ System.out.println("receive a MAPPER_COMPLETE");
                 	
                     MasterMain.slavePool.get(receiveMsg.getSockAddr())
                             .getMapperTasks().remove(receiveMsg.getSplitName());
-                    FileSplit.splitLayout.get(receiveMsg.getSockAddr())
-                            .remove(receiveMsg.getSplitName());
+                    FileSplit.splitLayout.get(receiveMsg.getSplitName())
+                            .remove(receiveMsg.getSockAddr());
+                    if(FileSplit.splitLayout.get(receiveMsg.getSplitName()).size() == 0) {
+                    	FileSplit.splitLayout.remove(receiveMsg.getSplitName());
+                    }
                     new Message(MSG_TYPE.MAPPER_COMPLETE, null).send(sock,
                             null, -1);
                     break;
                 case FILE_REQ:
                 	String reqFileName = (String)msg.getContent();
                 	ArrayList<CompleteMsg> result = new ArrayList<CompleteMsg>();
-                	//here is some error I think ...diff between JOBID_## and JOBID_
+System.out.println(FileSplit.splitLayout);
+                	//here is some error I think ...diff between JOBID_## and JOBID_     	
                 	for(String e : FileSplit.splitLayout.keySet()) {
                 		if(e.startsWith(reqFileName)) {
                 			ArrayList<SocketAddress> sockAddrList = FileSplit.splitLayout.get(e);
@@ -123,6 +132,7 @@ System.out.println("receive a MAPPER_COMPLETE");
                 			
                 		}
                 	}
+System.out.println(result);
                 	new Message(MSG_TYPE.FILE_REQ, result).send(sock, null, -1);	
                 	break;
                 default:

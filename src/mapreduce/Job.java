@@ -124,8 +124,8 @@ public class Job implements Serializable {
             throw new Exception("Job failed");
         }
         else {
-        	String jobID = (String)msgIn.getContent();
-        	DFSApi.get(jobID + "##_");
+        	Integer jobID = (Integer)msgIn.getContent();
+        	DFSApi.get(jobID + "##");
         }
         sock.close();
     }

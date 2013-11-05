@@ -19,7 +19,9 @@ public class SlaveSendFile extends Thread{
 	}
 	public void run() {
 		try {
-			DataInputStream file = new DataInputStream(new BufferedInputStream(new FileInputStream(fileName)));
+			DataInputStream file = new DataInputStream(new BufferedInputStream(
+					new FileInputStream(fileName)));
+			System.out.println("filename in SlaveSendFile "+ fileName);
 			DataOutputStream sockdata = new DataOutputStream(sock.getOutputStream());
 			byte[] buf = new byte[Constants.BufferSize];
 			int read_num;

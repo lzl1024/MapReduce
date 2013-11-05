@@ -16,7 +16,7 @@ public class JobInfo {
 		this.remainWorks = remainWorks;
 		outSplitName = new ArrayList<String>();
 		for (int i = 1; i <= remainWorks; i++) {
-			outSplitName.add(job.getJobID()+"_"+i);
+			outSplitName.add(job.getJobID()+"##_"+ i + "_1");
 		}
 	}
 

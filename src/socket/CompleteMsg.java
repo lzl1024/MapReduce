@@ -37,6 +37,8 @@ public class CompleteMsg implements Serializable {
 		this.sockAddr = sockAddr;
 	}
 
-	
+	public String toString() {
+		return this.jobID + " " + this.sockAddr + " " + this.splitName;
+	}
 
 }

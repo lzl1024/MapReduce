@@ -118,20 +118,12 @@ public class ReducerPerform extends Thread {
             e.printStackTrace();
             System.exit(-1);
         }
-
-        // transmit file to master
-        try {
-			DFSApi.get(reduceFile);
-		} catch (Exception e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
         
         try {
         	Socket tmpSock = new Socket(Constants.MasterIp,
 					Constants.SlaveActivePort);
         	
-			new Message(MSG_TYPE.REDUCER_COMPLETE, new CompleteMsg(null, 
+			new Message(MSG_TYPE.REDUCER_COMPLETE, new CompleteMsg(reduceFile + "_1", 
 					SlaveCompute.sockToMaster.getLocalSocketAddress(), this.jobID)).send(tmpSock, null, -1);
 			Message.receive(tmpSock, null, -1);
 			tmpSock.close();
@@ -157,7 +149,7 @@ public class ReducerPerform extends Thread {
      */
     private String mergeAndPerform(ArrayList<String> mergeOutFile)
             throws Exception {
-        String fileName = Constants.FS_LOCATION + this.jobID.toString() + "_" + this.index;
+        String fileName = Constants.FS_LOCATION + this.jobID.toString() + "##_" + this.index;
         Context context = new Context(1, fileName);
         PriorityQueue<KVPair> records = new PriorityQueue<KVPair>();
 

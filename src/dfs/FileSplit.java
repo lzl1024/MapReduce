@@ -178,6 +178,7 @@ public class FileSplit {
 	public static void main(String[] args) throws IOException {
 		new Constants(args[0]);
 		splitFile("src/fs/story1.txt", 2, 1);
+		
 	}
 
 }
