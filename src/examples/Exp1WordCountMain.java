@@ -7,7 +7,8 @@ import mapreduce.Job;
 public class Exp1WordCountMain {
 
 	public static void main(String[] args){
-		if (args.length != 2) {
+		if (args.length != 3) {
+			System.out.println("args length" + args.length);
 			System.out.println("Useage: Exp1WordCountMain <config file> <input path> <output path>");
 			System.exit(1);
 		}

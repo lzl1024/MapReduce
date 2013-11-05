@@ -1,5 +1,7 @@
 package examples;
 
+import java.util.Arrays;
+
 import io.Context;
 import io.IntWritable;
 import io.Text;

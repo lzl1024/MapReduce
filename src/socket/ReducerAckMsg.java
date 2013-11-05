@@ -88,4 +88,7 @@ public class ReducerAckMsg implements Serializable {
     public void setReduceValue(Class<?> reduceValue) {
         this.reduceValue = reduceValue;
     }
+    public String toString() {
+    	return this.ReducerClass + " " + this.mapperNum + " " + this.jobID + " " + this.index + " " + this.fileNames;
+    }
 }

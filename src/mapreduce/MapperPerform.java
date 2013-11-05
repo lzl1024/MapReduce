@@ -18,6 +18,7 @@ import java.util.ArrayList;
 
 import node.SlaveCompute;
 import socket.MapperAckMsg;
+import socket.CompleteMsg;
 import socket.Message;
 import socket.Message.MSG_TYPE;
 import util.Constants;
@@ -29,6 +30,7 @@ public class MapperPerform extends Thread {
 	private String splitName;
 
 	public MapperPerform(MapperAckMsg mapperAck) {
+		System.out.println("MapperAckMsg is" + mapperAck.toString());
 		this.reducerList = mapperAck.getReudcerList();
 		this.mapperClass = mapperAck.getMapperClass();
 		this.splitName = mapperAck.getSplitName();
@@ -49,6 +51,7 @@ public class MapperPerform extends Thread {
 
 			String record;
 			int i = 0;
+
 			Context context = new Context(reducerList.size(), splitName);
 			// process records line by line
 			while ((record = reader.readLine()) != null) {
@@ -66,7 +69,9 @@ public class MapperPerform extends Thread {
 				// send complete to master
 				Socket sock = new Socket(Constants.MasterIp,
 						Constants.SlaveActivePort);
-				new Message(MSG_TYPE.MAPPER_COMPLETE, splitName).send(sock,
+				
+				CompleteMsg  mapperComMsg = new CompleteMsg(splitName, SlaveCompute.sockToMaster.getLocalSocketAddress(), null);
+				new Message(MSG_TYPE.MAPPER_COMPLETE, mapperComMsg).send(sock,
 						null, -1);
 				Message.receive(sock, null, -1);
 				sock.close();
@@ -86,6 +91,8 @@ public class MapperPerform extends Thread {
 			String fileName = splitName + "_" + (i + 1);
 			try {
 				socket.connect(add);
+System.out.println("FILE_DOWNLOAD filename" + fileName);
+System.out.println("sock" + socket.getRemoteSocketAddress());
 				new Message(MSG_TYPE.FILE_DOWNLOAD, fileName).send(socket,
 						null, -1);
 
@@ -97,10 +104,12 @@ public class MapperPerform extends Thread {
 				byte[] buf = new byte[Constants.BufferSize]; 
 				int read_num;
 				while ((read_num = file.read(buf)) != -1) {  
+					System.out.println("read_num in mapperPerform" + read_num);
 					sockdata.write(buf, 0, read_num);  
                 }
 				sockdata.flush();
 				file.close();
+				socket.close();
 
 			} catch (IOException e) {
 				// reducer fail

@@ -9,12 +9,17 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.PriorityQueue;
 
+import node.SlaveCompute;
 import node.SlaveListen;
 
+import socket.CompleteMsg;
+import socket.Message;
+import socket.Message.MSG_TYPE;
 import socket.ReducerAckMsg;
 import util.Constants;
 import dfs.DFSApi;
@@ -29,6 +34,7 @@ public class ReducerPerform extends Thread {
     private Class<?> reduceValue;
 
     public ReducerPerform(ReducerAckMsg reducerAck) {
+    	System.out.println("ReducerAckMSg" + reducerAck.toString());
         this.ReducerClass = reducerAck.getReducerClass();
         this.fileNames = reducerAck.getfileNames();
         this.jobID = reducerAck.getJobID();
@@ -69,7 +75,7 @@ public class ReducerPerform extends Thread {
     	   	
         for(int i = 0; i < fileNames.size(); i++) {
             try {
-                FileReader fd = new FileReader(fileNames.get(i));
+                FileReader fd = new FileReader(fileNames.get(i) + Constants.REFUCE_FILE_SUFFIX);
                 BufferedReader reader = new BufferedReader(fd);
                 ArrayList<KVPair> records = new ArrayList<KVPair>();
                 String line;
@@ -90,9 +96,9 @@ public class ReducerPerform extends Thread {
                 FileWriter fw = new FileWriter(fileNames.get(i));
                 PrintWriter pw = new PrintWriter(fw);
                 for (KVPair kvp : records) {
-                    pw.println(kvp.key.get() + " // " + kvp.value.get());
+                    pw.println(kvp.key.get() + " " + Constants.divisor+ " " + kvp.value.get());
                 }
-
+                
                 pw.close();
                 fw.close();
             } catch (Exception e) {
@@ -115,11 +121,26 @@ public class ReducerPerform extends Thread {
 
         // transmit file to master
         DFSApi.get(reduceFile);
+        
+        try {
+        	Socket tmpSock = new Socket(Constants.MasterIp,
+					Constants.SlaveActivePort);
+        	
+			new Message(MSG_TYPE.REDUCER_COMPLETE, new CompleteMsg(null, 
+					SlaveCompute.sockToMaster.getLocalSocketAddress(), this.jobID)).send(tmpSock, null, -1);
+			Message.receive(tmpSock, null, -1);
+			tmpSock.close();
+			
+		} catch (Exception e) {
 
+			e.printStackTrace();
+		}
+        
         // delete all split files
         for (String file : fileNames) {
             new File(file).delete();
         }
+        
     }
 
     /**
@@ -131,7 +152,7 @@ public class ReducerPerform extends Thread {
      */
     private String mergeAndPerform(ArrayList<String> mergeOutFile)
             throws Exception {
-        String fileName = this.jobID.toString() + "_" + this.index;
+        String fileName = Constants.FS_LOCATION + this.jobID.toString() + "_" + this.index;
         Context context = new Context(1, fileName);
         PriorityQueue<KVPair> records = new PriorityQueue<KVPair>();
 
@@ -205,13 +226,14 @@ public class ReducerPerform extends Thread {
      * @throws Exception
      */
     private KVPair readReord(String line, int index) throws Exception {
-        int pos = line.indexOf("//");
+        int pos = line.indexOf(Constants.divisor);
         Writable<?> key = (Writable<?>) reduceKey.getConstructor()
                 .newInstance();
         key.parse(line.substring(0, pos).trim());
         Writable<?> value = (Writable<?>) reduceValue.getConstructor()
                 .newInstance();
-        value.parse(line.substring(pos + 1).trim());
+
+        value.parse(line.substring(pos + Constants.divisor.length()).trim());
         return new KVPair(key, value, index);
     }
 }

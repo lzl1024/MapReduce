@@ -9,7 +9,7 @@ public class JobInfo {
 	private Socket sock;
 	private ArrayList<String> outSplitName;
 	private Job job;
-
+	
 	public JobInfo(Job job, Socket sock, int remainWorks) {
 		this.job = job;
 		this.sock = sock;

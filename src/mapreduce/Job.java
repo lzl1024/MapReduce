@@ -127,8 +127,8 @@ public class Job implements Serializable {
         // generate job ID
         int i = 0;
         while (i < 1000
-                && Scheduler.jobPool.containsKey(jobID = (int) Math.random()
-                        * Constants.Random_Base)) {
+                && Scheduler.jobPool.containsKey(jobID = (int) (Math.random()
+                        * Constants.Random_Base))) {
             i++;
         }
         return i == 1000 ? false : true;

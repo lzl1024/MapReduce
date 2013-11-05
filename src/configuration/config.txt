@@ -12,9 +12,9 @@ RegularTimout=50000
 IdealMapperNum=2
 IdealReducerNum=2
 IdealMapperJobs=2
-IdealReduderJobs=2
+IdealReducerJobs=2
 ReplFac=2
 
 //Port realm
-startPort = 20000
-endPort = 40000
+startPort = 9000
+endPort = 10000

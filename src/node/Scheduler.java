@@ -13,6 +13,7 @@ import java.util.Map.Entry;
 import mapreduce.Job;
 import mapreduce.JobInfo;
 import socket.MapperAckMsg;
+import socket.CompleteMsg;
 import socket.Message;
 import socket.Message.MSG_TYPE;
 import socket.ReducerAckMsg;
@@ -77,11 +78,13 @@ public class Scheduler extends Thread {
                     break;
                 // one reducer complete the work
                 case REDUCER_COMPLETE:
-                    JobInfo jobInfo = jobPool.get((Integer) msg.getContent());
+System.out.println("receive a REDUCER_COMPLETE");
+					CompleteMsg comMsg = (CompleteMsg)msg.getContent();
+                    JobInfo jobInfo = jobPool.get(comMsg.getJobID());
                     int remain = jobInfo.getRemainWorks() - 1;
                     jobInfo.setRemainWorks(remain);
                     // update slave pool
-                    MasterMain.slavePool.get(sock.getRemoteSocketAddress())
+                    MasterMain.slavePool.get(comMsg.getSockAddr())
                             .getReducerTasks()
                             .remove(new Integer(jobInfo.getJob().getJobID()));
 
@@ -97,11 +100,14 @@ public class Scheduler extends Thread {
                     break;
                 // one mapper complete the work
                 case MAPPER_COMPLETE:
+System.out.println("receive a MAPPER_COMPLETE");
                     // update file layout and slavePool
-                    MasterMain.slavePool.get(sock.getRemoteSocketAddress())
-                            .getMapperTasks().remove((String) msg.getContent());
-                    FileSplit.splitLayout.get(sock.getRemoteSocketAddress())
-                            .remove((String) msg.getContent());
+                	CompleteMsg receiveMsg = (CompleteMsg)msg.getContent();
+                	
+                    MasterMain.slavePool.get(receiveMsg.getSockAddr())
+                            .getMapperTasks().remove(receiveMsg.getSplitName());
+                    FileSplit.splitLayout.get(receiveMsg.getSockAddr())
+                            .remove(receiveMsg.getSplitName());
                     new Message(MSG_TYPE.MAPPER_COMPLETE, null).send(sock,
                             null, -1);
                     break;
@@ -145,8 +151,7 @@ public class Scheduler extends Thread {
         // split files
         HashMap<String, ArrayList<SocketAddress>> layout;
         try {
-            layout = FileSplit.fileDispatch(freeMappers, Constants.FS_LOCATION
-                    + job.getInputFile(), Constants.ReplFac,
+            layout = FileSplit.fileDispatch(freeMappers, job.getInputFile(), Constants.ReplFac,
                     Constants.IdealMapperNum, job.getJobID());
             System.out.println("Current FS Layout: " + FileSplit.splitLayout);
         } catch (Exception e) {
@@ -157,12 +162,24 @@ public class Scheduler extends Thread {
         // schedule reducers
         ArrayList<SocketAddress> reducerList = new ArrayList<SocketAddress>();
         Collections.sort(slaveList, new SlaveInfo.ReducerPrio());
-        for (i = 0; slaveList.get(i).getReducerTasks().size() < Constants.IdealReducerNum && i < slaveList.size(); i++) {
-            reducerList.add(slaveList.get(i).getSocketAddr());
-            inviteReducer(slaveList.get(i).getSocket(),
-                    Constants.IdealMapperNum, job, i + 1);
-        }
 
+        for (i = 0; i < slaveList.size() && slaveList.get(i).getReducerTasks().size() < Constants.IdealReducerJobs; i++) {
+            if(reducerList.size() < Constants.IdealReducerNum) {
+            	reducerList.add(slaveList.get(i).getSocketAddr());
+            	inviteReducer(slaveList.get(i).getSocket(),
+                    Constants.IdealMapperNum, job, i + 1);
+            }
+            else {
+            	break;
+            }
+        }
+        if(reducerList.size() == 0) {
+        	System.out.println("All reducers are full.");
+        	System.exit(0);
+        }
+        else {
+        	System.out.println("reducer size is " + reducerList.size());
+        }
         // schedule mappers
         HashSet<SocketAddress> takedSock = new HashSet<SocketAddress>();
         // if every one in the list has a job, choose index failIterate
@@ -260,5 +277,6 @@ public class Scheduler extends Thread {
         System.out.println(outSplitName);
         outSplitName = outSplitName;
         //TODO: we can do this as soon as work is done.
+        
     }
 }

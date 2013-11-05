@@ -25,7 +25,7 @@ import dfs.FileTransmitServer;
  */
 public class SlaveCompute extends Thread {
 
-	private Socket sockToMaster;
+	public static Socket sockToMaster;
 	// failed reducer task, wait for new reducer to send files
 	// key: socketAddress, value: splitName
 	public static HashMap<SocketAddress, ArrayList<String>> failedCache = new HashMap<SocketAddress, ArrayList<String>>();
@@ -38,11 +38,12 @@ public class SlaveCompute extends Thread {
 	}
 
 	public void run() {
+		System.out.println("sockToMaster: " + sockToMaster.getLocalPort());
 		while (true) {
 			Message msgIn = null;
 			try {
 				msgIn = Message.receive(sockToMaster, null, -1);
-
+				
 				switch (msgIn.getType()) {
 				case FILE_SPLIT_REQ:
 					// get the file split name, download the split and send ack
@@ -76,6 +77,8 @@ public class SlaveCompute extends Thread {
 					break;
 				case NOTIFY_PORT:
 					new SlaveListen((Integer)msgIn.getContent()).start();
+					// send back to master same msg
+					msgIn.send(sockToMaster, null, -1);
 					break;
 				case CHANGE_REDUCELIST:
 					new SlaveChangeReduce((ChangeReduceMsg)msgIn.getContent()).start();

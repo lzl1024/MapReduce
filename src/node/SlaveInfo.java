@@ -6,6 +6,9 @@ import java.net.SocketAddress;
 import java.util.Comparator;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import socket.Message;
+import socket.Message.MSG_TYPE;
+
 public class SlaveInfo {
 
 	private Socket socket;
@@ -28,16 +31,24 @@ public class SlaveInfo {
 		socket = sock;
 	}
 
-	public SlaveInfo(Socket sock, int port) throws IOException {
+	public SlaveInfo(Socket sock, int port) {
 		mapperTasks = new CopyOnWriteArrayList<String>();
 		reducerTasks = new CopyOnWriteArrayList<Integer>();
 		socket = sock;
 		this.port = port;
 		Socket tmpSock;
-
-		tmpSock = new Socket(socket.getInetAddress(), port);
-		this.sockAddr = tmpSock.getRemoteSocketAddress();
-		tmpSock.close();
+		System.out.println("socketAddr : " + socket.getInetAddress() + "port :" + port);
+		try {
+			tmpSock = new Socket(socket.getInetAddress(), port);
+			new Message(MSG_TYPE.NOTIFY_PORT, null).send(tmpSock, null, -1);
+			this.sockAddr = tmpSock.getRemoteSocketAddress();
+			tmpSock.close();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			System.out.println("Slave listen port unavailable");
+			e.printStackTrace();
+		}
+		
 
 		
 	}

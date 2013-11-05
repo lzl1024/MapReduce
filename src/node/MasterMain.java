@@ -32,12 +32,13 @@ import dfs.FileTransmitServer;
 public class MasterMain {
 	// pool to record the slave socket
 	public static ConcurrentHashMap<SocketAddress, SlaveInfo> slavePool = new ConcurrentHashMap<SocketAddress, SlaveInfo>();
-	public static int curPort = Constants.startPort;
+	public static int curPort;
 	public static void main(String[] args) {
 		// fill up the constants
 		
 		try {
 			new Constants(args[0]);
+			curPort = Constants.startPort;
 		} catch (IOException e) {
 			System.out.println("configure file missing!");
 			System.exit(1);
@@ -86,17 +87,23 @@ public class MasterMain {
 			Socket sock = null;
 			try {
 				sock = serverSock.accept();
+				System.out.println("sock RemoteAddr" + sock.getRemoteSocketAddress());
 				sock.setSoTimeout(Constants.RegularTimout);
-
-				new Message(MSG_TYPE.NOTIFY_PORT, curPort).send(sock, null, -1);
 				curPort ++;
+				System.out.println("curPort is" + curPort);
 				if(curPort > Constants.endPort) {
 					System.out.println("Port pool used up.");
 					System.exit(0);
 				}
+				new Message(MSG_TYPE.NOTIFY_PORT, curPort).send(sock, null, -1);
 				
-				slavePool.put(sock.getRemoteSocketAddress(),
-						new SlaveInfo(sock, curPort));
+				if (Message.receive(sock, null, -1).getType() == MSG_TYPE.NOTIFY_PORT) {
+					slavePool.put(sock.getRemoteSocketAddress(),
+						new SlaveInfo(sock, MasterMain.curPort));
+				} else {
+					throw new Exception();
+				}
+
 				// i++;
 				// if (i == 2)
 				// break;

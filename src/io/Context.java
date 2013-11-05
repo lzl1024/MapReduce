@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
+import util.Constants;
+
 public class Context {
 
 	private ArrayList<PrintWriter> writerList = new ArrayList<PrintWriter>();
@@ -21,13 +23,15 @@ public class Context {
 				e.printStackTrace();
 			}
 		}
+		this.size = size;
 		close = false;
 	}
 
 	public void write(Writable<?> key, Writable<?> value) {
 		// get proper writer
-		PrintWriter out = writerList.get(key.hashCode() % size);
-		out.println(key.get() + " // " + value.get());
+
+		PrintWriter out = writerList.get(Math.abs(key.hashCode()) % size);
+		out.println(key.get() + " " + Constants.divisor + " " + value.get());
 	}
 	
 	public void close() {

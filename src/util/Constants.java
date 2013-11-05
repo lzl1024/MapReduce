@@ -29,7 +29,7 @@ public class Constants {
 	// the ideal number of mapper job in one slave
 	public static int IdealMapperJobs;
 	// the ideal number of reducer job in one slave
-	public static int IdealReduderJobs;
+	public static int IdealReducerJobs;
 	// the replication factor
 	public static int ReplFac;
 	// the start port 
@@ -44,9 +44,10 @@ public class Constants {
 	public static String HTTP_PREFIX = "http://";
 	public static int KEEP_ALIVE_INT = 5000;
 	public static int Random_Base = 1000;
-	public static String Class_PREFIX = "expamles.";
+	public static String Class_PREFIX = "examples.";
 	public static final int BufferSize = 8196;
-
+	public static String REFUCE_FILE_SUFFIX = "_REDUCE";
+	public static String divisor = "!#$";
 	/**
 	 * Parse the configuration file
 	 * 
@@ -87,10 +88,11 @@ public class Constants {
 			IdealReducerNum = Integer.parseInt(args.get("IdealReducerNum"));
 			SlaveActivePort = Integer.parseInt(args.get("SlaveActivePort"));
 			RegularTimout = Integer.parseInt(args.get("RegularTimout"));
-			IdealReduderJobs = Integer.parseInt(args.get("IdealReduderJobs"));
+			IdealReducerJobs = Integer.parseInt(args.get("IdealReducerJobs"));
 			IdealMapperJobs = Integer.parseInt(args.get("IdealMapperJobs"));
 			ReplFac = Integer.parseInt(args.get("ReplFac"));
 			startPort = Integer.parseInt(args.get("startPort"));
+			System.out.println("startPort from Config is " + startPort);
 			endPort = Integer.parseInt(args.get("endPort"));
 			
 			MasterIp = args.get("MasterIp");

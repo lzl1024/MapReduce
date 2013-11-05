@@ -12,8 +12,8 @@ master: all
 slave: all
 	java -cp .:lib/http-20070405.jar node.SlaveMain ${ConfigFile}
 
-exp1: all
-	java Exp1WordCountMain ${ConfigFile} ${InputPath1} ${OutputPath1}
+exp1:  all 
+	java examples.Exp1WordCountMain ${ConfigFile} ${InputPath1} ${OutputPath1}
 
 clean:
 	find . -name *.class | xargs rm -rf >> a.out

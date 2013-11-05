@@ -40,24 +40,22 @@ public class FileSplit {
 	 */
 	private static String[] splitFile(String fileName, int replNum, int jobID)
 			throws IOException {
-		File file = new File(fileName);
+		
 		PrintWriter[] pwList = new PrintWriter[replNum];
 		String[] splitNames = new String[replNum];
 
-		if (!file.exists()) {
-			throw new IOException("File cannot found");
-		}
+
 		
 		// get split names
 		for (int i = 1; i <= replNum; i++) {
-			splitNames[i - 1] = jobID + "_" + fileName + "_" + i;
+			splitNames[i - 1] = Constants.FS_LOCATION + jobID + "_" + fileName + "_" + i;
 			pwList[i - 1] = new PrintWriter(new FileWriter(splitNames[i - 1]),
 					true);
 		}
 
 		// split file
 		int i = 0;
-		BufferedReader read = new BufferedReader(new FileReader(fileName));
+		BufferedReader read = new BufferedReader(new FileReader(Constants.FS_LOCATION + fileName));
 		String record;
 		while ((record = read.readLine()) != null) {
 			pwList[i].println(record);

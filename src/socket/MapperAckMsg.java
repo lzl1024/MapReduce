@@ -45,4 +45,7 @@ public class MapperAckMsg implements Serializable {
 	public void setSplitName(String splitName) {
 		this.splitName = splitName;
 	}
+	public String toString() {
+		return this.mapperClass + " " + this.splitName + " " + this.reducerList.toString();
+	}
 }
