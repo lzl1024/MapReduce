@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.Socket;
 
+import dfs.DFSApi;
+
 import node.Scheduler;
 import socket.Message;
 import util.Constants;
@@ -116,9 +118,14 @@ public class Job implements Serializable {
         Socket sock = new Socket(Constants.MasterIp, Constants.SlaveActivePort);
         // send the job to master and wait for completion
         new Message(Message.MSG_TYPE.NEW_JOB, this).send(sock, null, -1);
-        if (Message.receive(sock, null, -1).getType() != Message.MSG_TYPE.WORK_COMPELETE) {
+        Message msgIn = Message.receive(sock, null, -1);
+        if (msgIn.getType() != Message.MSG_TYPE.WORK_COMPELETE) {
             sock.close();
             throw new Exception("Job failed");
+        }
+        else {
+        	String jobID = (String)msgIn.getContent();
+        	DFSApi.get(jobID + "##_");
         }
         sock.close();
     }

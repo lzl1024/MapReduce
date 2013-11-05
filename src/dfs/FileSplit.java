@@ -27,7 +27,7 @@ public class FileSplit {
 	 * The layout that which host get which split. Master can allocate work
 	 * according to this layout
 	 */
-	public static ConcurrentHashMap<SocketAddress, ArrayList<String>> splitLayout = new ConcurrentHashMap<SocketAddress, ArrayList<String>>();
+	public static ConcurrentHashMap<String, ArrayList<SocketAddress>> splitLayout = new ConcurrentHashMap<String, ArrayList<SocketAddress>>();
 
 	/**
 	 * split the file according to its file name and replication factor
@@ -126,12 +126,12 @@ public class FileSplit {
 					// download success, add record that which mapper get split
 					SocketAddress key = freeMappers.get(mapperPointer)
 							.getRemoteSocketAddress();
-					if (splitLayout.containsKey(key)) {
-						splitLayout.get(key).add(fileSplit);
+					if (splitLayout.containsKey(fileSplit)) {
+						splitLayout.get(fileSplit).add(key);
 					} else {
-						ArrayList<String> tmp = new ArrayList<String>();
-						tmp.add(fileSplit);
-						splitLayout.put(key, tmp);
+						ArrayList<SocketAddress> tmp = new ArrayList<SocketAddress>();
+						tmp.add(key);
+						splitLayout.put(fileSplit, tmp);
 					}
 
 					// add to entry

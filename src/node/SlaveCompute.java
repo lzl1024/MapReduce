@@ -82,6 +82,7 @@ public class SlaveCompute extends Thread {
 					break;
 				case CHANGE_REDUCELIST:
 					new SlaveChangeReduce((ChangeReduceMsg)msgIn.getContent()).start();
+					break;
 				default:
 					break;
 				}

@@ -120,7 +120,12 @@ public class ReducerPerform extends Thread {
         }
 
         // transmit file to master
-        DFSApi.get(reduceFile);
+        try {
+			DFSApi.get(reduceFile);
+		} catch (Exception e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
         
         try {
         	Socket tmpSock = new Socket(Constants.MasterIp,

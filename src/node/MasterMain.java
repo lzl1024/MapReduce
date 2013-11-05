@@ -169,13 +169,14 @@ public class MasterMain {
 			//move its map jobs to other hosts
 			for(String fileSplit : slavePool.get(sockAddr).getMapperTasks()) {
 				boolean flag = false;
-				for(java.util.Map.Entry<SocketAddress, ArrayList<String>> entry : FileSplit.splitLayout.entrySet()) {
-					if(entry.getValue().contains(fileSplit)) {
-						Scheduler.inviteMapper(entry.getKey(), new Job(Scheduler.MapperJob.get(fileSplit).getMapperClass()),
+				ArrayList<SocketAddress> sockAddrList = FileSplit.splitLayout.get(fileSplit);
+				//here is a little confused......need to double check
+				for(SocketAddress e : sockAddrList) {
+					Scheduler.inviteMapper(e, new Job(Scheduler.MapperJob.get(fileSplit).getMapperClass()),
 								Scheduler.MapperJob.get(fileSplit).getReudcerList(), fileSplit);	
-						flag = true;
-						break;
-					}
+					flag = true;
+					break;
+					
 				}
 				if(!flag) {
 					// TODO: what if no host has this piece of file(no mapper candidate)

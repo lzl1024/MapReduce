@@ -111,6 +111,20 @@ System.out.println("receive a MAPPER_COMPLETE");
                     new Message(MSG_TYPE.MAPPER_COMPLETE, null).send(sock,
                             null, -1);
                     break;
+                case FILE_REQ:
+                	String reqFileName = (String)msg.getContent();
+                	ArrayList<CompleteMsg> result = new ArrayList<CompleteMsg>();
+                	//here is some error I think ...diff between JOBID_## and JOBID_
+                	for(String e : FileSplit.splitLayout.keySet()) {
+                		if(e.startsWith(reqFileName)) {
+                			ArrayList<SocketAddress> sockAddrList = FileSplit.splitLayout.get(e);
+                			SocketAddress targetAddr = sockAddrList.get(0);
+                			result.add(new CompleteMsg(e, MasterMain.slavePool.get(targetAddr).getSocketAddr(),null));
+                			
+                		}
+                	}
+                	new Message(MSG_TYPE.FILE_REQ, result).send(sock, null, -1);	
+                	break;
                 default:
                     throw new IOException();
                 }
