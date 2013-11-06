@@ -68,10 +68,7 @@ public class Scheduler extends Thread {
                 // new Job comes
                 case NEW_JOB:
                     try {
-                        System.out.println("msg Content is :"
-                                + ((Job) msg.getContent()).getJobID()
-                                + "  Mapper class is"
-                                + ((Job) msg.getContent()).getMapperClass());
+
                         handleJob((Job) msg.getContent(), sock);
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -86,6 +83,10 @@ public class Scheduler extends Thread {
                     ArrayList<SocketAddress> newList = new ArrayList<SocketAddress>();
                     newList.add(comMsg.getSockAddr());
                     FileSplit.splitLayout.put(comMsg.getSplitName(), newList);
+                    // add the splits number in slave
+                    MasterMain.slavePool.get(comMsg.getSockAddr()).setSplits(
+                            MasterMain.slavePool.get(comMsg.getSockAddr())
+                                    .getSplits() + 1);
 
                     JobInfo jobInfo = jobPool.get(comMsg.getJobID());
                     int remain = jobInfo.getRemainWorks() - 1;
@@ -114,19 +115,32 @@ public class Scheduler extends Thread {
 
                     MasterMain.slavePool.get(receiveMsg.getSockAddr())
                             .getMapperTasks().remove(receiveMsg.getSplitName());
-                    FileSplit.splitLayout.get(receiveMsg.getSplitName())
-                            .remove(receiveMsg.getSockAddr());
-                    if (FileSplit.splitLayout.get(receiveMsg.getSplitName())
-                            .size() == 0) {
-                        FileSplit.splitLayout.remove(receiveMsg.getSplitName());
-                    }
+//                    System.out.println("Mapper FS Layout: "
+//                            + FileSplit.splitLayout);
+//
+//                    FileSplit.splitLayout.get(receiveMsg.getSplitName())
+//                            .remove(receiveMsg.getSockAddr());
+//                    if (FileSplit.splitLayout.get(receiveMsg.getSplitName())
+//                            .size() == 0) {
+//                        FileSplit.splitLayout.remove(receiveMsg.getSplitName());
+//                    } // add the splits number in slave
+//                    MasterMain.slavePool.get(receiveMsg.getSockAddr())
+//                            .setSplits(
+//                                    MasterMain.slavePool.get(
+//                                            receiveMsg.getSockAddr())
+//                                            .getSplits() - 1);
+                    System.out.println("After Mapper FS Layout: "
+                            + FileSplit.splitLayout);
+
                     new Message(MSG_TYPE.MAPPER_COMPLETE, null).send(sock,
                             null, -1);
                     break;
                 case FILE_REQ:
+                    // reply the get file request and choose tell user which
+                    // node to find
                     String reqFileName = (String) msg.getContent();
                     ArrayList<CompleteMsg> result = new ArrayList<CompleteMsg>();
-                    System.out.println(FileSplit.splitLayout);
+
                     // here is some error I think ...diff between JOBID_## and
                     // JOBID_
                     for (String e : FileSplit.splitLayout.keySet()) {

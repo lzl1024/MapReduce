@@ -11,27 +11,6 @@ import dfs.FileTransmitServer;
 public class SlaveListen extends Thread {
     private ServerSocket ListenSocket = null;
 
-    // Thread to send file
-    public class SlaveSendFile extends Thread {
-
-        private String fileName;
-        private Socket sock;
-
-        public SlaveSendFile(Socket sock, String fileName) {
-            this.fileName = fileName;
-            this.sock = sock;
-        }
-
-        public void run() {
-            try {
-                FileTransmitServer.sendFile(fileName, sock);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-        }
-    }
-
     public SlaveListen(int port) {
         try {
             this.ListenSocket = new ServerSocket(port);
@@ -74,6 +53,10 @@ public class SlaveListen extends Thread {
                         SlaveCompute.waitingThreadMap.remove(jobId);
                         SlaveCompute.fileLeftMap.remove(jobId);
                     }
+
+                    if (!sock.isClosed()) {
+                        sock.close();
+                    }
                     break;
                 case NOTIFY_PORT:
                     // try out this listen port
@@ -84,8 +67,8 @@ public class SlaveListen extends Thread {
                     System.out
                             .println("Slave now is requested to send files to user");
 
-                    new SlaveSendFile(sock, (String) msgIn.getContent())
-                            .start();
+                    new FileTransmitServer.SlaveSendFile(sock,
+                            (String) msgIn.getContent()).start();
                     break;
                 default:
                     System.out.println("type is not defined");

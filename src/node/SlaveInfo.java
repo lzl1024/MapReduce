@@ -20,16 +20,20 @@ public class SlaveInfo {
     private int port;
     // the private socketAddress for communication between slaves
     private SocketAddress sockAddr;
+    // the number of splits in this node
+    private int splits;
 
     public SlaveInfo() {
         mapperTasks = new CopyOnWriteArrayList<String>();
         reducerTasks = new CopyOnWriteArrayList<Integer>();
+        splits = 0;
     }
 
     public SlaveInfo(Socket sock) {
         mapperTasks = new CopyOnWriteArrayList<String>();
         reducerTasks = new CopyOnWriteArrayList<Integer>();
         socket = sock;
+        splits = 0;
     }
 
     public SlaveInfo(Socket sock, int port) {
@@ -38,6 +42,7 @@ public class SlaveInfo {
         socket = sock;
         this.port = port;
         Socket tmpSock;
+        splits = 0;
         System.out.println("socketAddr : " + socket.getInetAddress() + "port :"
                 + port);
         try {
@@ -55,6 +60,15 @@ public class SlaveInfo {
             e.printStackTrace();
         }
 
+    }
+
+
+    public int getSplits() {
+        return splits;
+    }
+
+    public void setSplits(int splits) {
+        this.splits = splits;
     }
 
     public Socket getSocket() {
@@ -130,9 +144,23 @@ public class SlaveInfo {
 
     }
 
+    public static class FilePrio implements Comparator<SlaveInfo> {
+
+        @Override
+        public int compare(SlaveInfo info1, SlaveInfo info2) {
+            if (info1.splits < info2.splits) {
+                return 1;
+            } else if (info1.splits > info2.splits) {
+                return -1;
+            }
+            return 0;
+        }
+
+    }
+    
     public String toString() {
         return this.mapperTasks.toString() + " \n"
                 + this.reducerTasks.toString() + " \n" + this.sockAddr + " "
-                + this.port;
+                + this.port + " " + this.splits;
     }
 }

@@ -96,6 +96,9 @@ public class MapperPerform extends Thread {
 
                 // send file
                 FileTransmitServer.sendFile(fileName, socket);
+                if(!socket.isClosed()) {
+                    socket.close();
+                }
 
             } catch (IOException e) {
                 // reducer fail
@@ -119,6 +122,7 @@ public class MapperPerform extends Thread {
                     -1);
             Message.receive(masterSocket, null, -1);
             masterSocket.close();
+            return false;
         }
         return true;
     }

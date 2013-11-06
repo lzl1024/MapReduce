@@ -95,7 +95,6 @@ public class FileTransmitServer implements HttpHandler {
         }
         sockdata.flush();
         file.close();
-        socket.close();
     }
 
     /**
@@ -117,5 +116,58 @@ public class FileTransmitServer implements HttpHandler {
             file.write(buf, 0, readNum);
         }
         file.close();
+    }
+    
+    /**
+     * Download file from other slaves
+     */
+    public static class SlaveDownload extends Thread {
+
+        private Socket sock;
+        private String fileName;
+
+        public SlaveDownload(Socket sock, String fileName) {
+            this.sock = sock;
+            this.fileName = fileName;
+        }
+
+        public void run() {
+            try {
+                FileTransmitServer.receiveFile(fileName, sock);
+                if (!sock.isClosed()){
+                    sock.close();
+                }
+            } catch (Exception e) {
+                System.out.println("receive file unsuccessfully");
+                e.printStackTrace();
+            }
+
+            System.out.println("receive file successfully");
+        }
+    }
+
+    
+    // Thread to send file
+    public static class SlaveSendFile extends Thread {
+
+        private String fileName;
+        private Socket sock;
+
+        public SlaveSendFile(Socket sock, String fileName) {
+            this.fileName = fileName;
+            this.sock = sock;
+        }
+
+        public void run() {
+            try {
+                FileTransmitServer.sendFile(fileName, sock);
+                if (!sock.isClosed()){
+                    sock.close();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
     }
 }

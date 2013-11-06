@@ -4,7 +4,6 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 
-import mapreduce.UserDownload;
 import socket.CompleteMsg;
 import socket.Message;
 import socket.Message.MSG_TYPE;
@@ -17,7 +16,12 @@ import util.Constants;
  */
 public class DFSApi {
 
-    public static void put(String fileName) {
+    public static void put(String fileName) throws Exception {
+        Socket socket = new Socket(Constants.MasterIp,
+                Constants.SlaveActivePort);
+
+        // send file to master
+        new Message(MSG_TYPE.PUT_FILE, fileName).send(socket, null, -1);
 
     }
 
@@ -26,8 +30,8 @@ public class DFSApi {
         String newfileName = Constants.FS_LOCATION + fileName + "_";
         Socket socket = new Socket(Constants.MasterIp,
                 Constants.SlaveActivePort);
-        
-        //request split information
+
+        // request split information
         new Message(MSG_TYPE.FILE_REQ, newfileName).send(socket, null, -1);
         Message msgIn = Message.receive(socket, null, -1);
         if (msgIn.getType() != MSG_TYPE.FILE_REQ) {
@@ -45,7 +49,10 @@ public class DFSApi {
             System.out.println("sockAddr" + sockAddr + " filename is"
                     + realFileName);
 
-            new UserDownload(sockAddr, realFileName).start();
+            Socket sock = new Socket();
+            sock.connect(sockAddr);
+            new Message(MSG_TYPE.GET_FILE, realFileName).send(sock, null, -1);
+            new FileTransmitServer.SlaveDownload(sock, realFileName).start();
         }
 
         socket.close();

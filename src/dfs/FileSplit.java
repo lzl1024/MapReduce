@@ -54,8 +54,15 @@ public class FileSplit {
                     pw.close();
                 }
                 i++;
-                splitName = Constants.FS_LOCATION + jobID + "_" + fileName
-                        + "_" + i;
+
+                // jobID < 0 stand alone
+                if (jobID >= 0) {
+                    splitName = Constants.FS_LOCATION + jobID + "_" + fileName
+                            + "_" + i;
+                } else {
+                    splitName = Constants.FS_LOCATION + fileName + "_" + i;
+                }
+
                 splitNames.add(splitName);
                 pw = new PrintWriter(new FileWriter(splitName));
                 currentSize = 0;
@@ -71,7 +78,6 @@ public class FileSplit {
 
         return splitNames;
     }
-
 
     /**
      * Split a file into pieces and dispatch them to different available hosts
@@ -134,6 +140,9 @@ public class FileSplit {
                         tmp.add(key);
                         splitLayout.put(fileSplit, tmp);
                     }
+                    //add the splits number in slave
+                    MasterMain.slavePool.get(key).setSplits(
+                            MasterMain.slavePool.get(key).getSplits() + 1);
 
                     // add to entry
                     splitSock.add(key);
