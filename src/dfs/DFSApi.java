@@ -39,6 +39,8 @@ public class DFSApi {
     		SocketAddress sockAddr = msg.getSockAddr();
     		String realFileName = msg.getSplitName();
     		System.out.println("sockAddr" + sockAddr + " filename is" + fileName);
+    		
+    		
     		new UserDownload(sockAddr, realFileName).start();
     	}
     	socket.close();
@@ -48,9 +50,6 @@ public class DFSApi {
 
     }
 
-    private static void get(String fileName, int num) {
-    	
-    }
     /*public static void main(String[] args) {
     	FileSplit.splitLayout.put(arg0, arg1)
     }

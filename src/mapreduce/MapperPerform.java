@@ -17,6 +17,7 @@ import java.net.SocketAddress;
 import java.util.ArrayList;
 
 import node.SlaveCompute;
+import node.SlaveListen;
 import socket.MapperAckMsg;
 import socket.CompleteMsg;
 import socket.Message;
@@ -97,19 +98,7 @@ System.out.println("sock" + socket.getRemoteSocketAddress());
 						null, -1);
 
 				// send file
-				DataInputStream file = new DataInputStream(
-						new BufferedInputStream(new FileInputStream(fileName)));
-				DataOutputStream sockdata = new DataOutputStream(
-						socket.getOutputStream());
-				byte[] buf = new byte[Constants.BufferSize]; 
-				int read_num;
-				while ((read_num = file.read(buf)) != -1) {  
-					System.out.println("read_num in mapperPerform" + read_num);
-					sockdata.write(buf, 0, read_num);  
-                }
-				sockdata.flush();
-				file.close();
-				socket.close();
+				SlaveListen.sendFile(fileName, socket);
 
 			} catch (IOException e) {
 				// reducer fail
