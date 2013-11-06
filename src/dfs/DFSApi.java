@@ -17,43 +17,42 @@ import util.Constants;
  */
 public class DFSApi {
 
-	public static void put(String fileName) {
+    public static void put(String fileName) {
 
-	}
+    }
 
-	public static void get(String fileName) throws Exception {
-		String newfileName = Constants.FS_LOCATION + fileName + "_";
-		Socket socket = new Socket(Constants.MasterIp,
-				Constants.SlaveActivePort);
-		new Message(MSG_TYPE.FILE_REQ, newfileName).send(socket, null, -1);
-		Message msgIn = Message.receive(socket, null, -1);
-		if (msgIn.getType() != MSG_TYPE.FILE_REQ) {
-			System.out.println("This is not the message we want!");
-		}
-		@SuppressWarnings("unchecked")
-		ArrayList<CompleteMsg> compleMsg = (ArrayList<CompleteMsg>) msgIn
-				.getContent();
+    @SuppressWarnings("unchecked")
+    public static void get(String fileName) throws Exception {
+        String newfileName = Constants.FS_LOCATION + fileName + "_";
+        Socket socket = new Socket(Constants.MasterIp,
+                Constants.SlaveActivePort);
+        
+        //request split information
+        new Message(MSG_TYPE.FILE_REQ, newfileName).send(socket, null, -1);
+        Message msgIn = Message.receive(socket, null, -1);
+        if (msgIn.getType() != MSG_TYPE.FILE_REQ) {
+            System.out.println("This is not the message we want!");
+        }
 
-		// receive files
-		for (CompleteMsg msg : compleMsg) {
+        ArrayList<CompleteMsg> compleMsg = (ArrayList<CompleteMsg>) msgIn
+                .getContent();
 
-			SocketAddress sockAddr = msg.getSockAddr();
-			String realFileName = msg.getSplitName();
-			System.out.println("sockAddr" + sockAddr + " filename is"
-					+ realFileName);
+        // request files
+        for (CompleteMsg msg : compleMsg) {
 
-			new UserDownload(sockAddr, realFileName).start();
-		}
+            SocketAddress sockAddr = msg.getSockAddr();
+            String realFileName = msg.getSplitName();
+            System.out.println("sockAddr" + sockAddr + " filename is"
+                    + realFileName);
 
-		socket.close();
-	}
+            new UserDownload(sockAddr, realFileName).start();
+        }
 
-	public static void delete(String fileName) {
+        socket.close();
 
-	}
+    }
 
-	/*
-	 * public static void main(String[] args) { FileSplit.splitLayout.put(arg0,
-	 * arg1) }
-	 */
+    public static void delete(String fileName) {
+
+    }
 }

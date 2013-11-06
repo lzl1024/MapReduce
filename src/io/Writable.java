@@ -8,13 +8,13 @@ import java.io.Serializable;
  * 
  */
 public abstract interface Writable<T> extends Serializable {
-	/**
-	 * get and set the field
-	 */
-	public T get();
+    /**
+     * get and set the field
+     */
+    public T get();
 
-	public void set(T fields);
-	
-	//parse fields from string to what it needs
-	void parse(String fields);
+    public void set(T fields);
+
+    // parse fields from string to what it needs
+    void parse(String fields);
 }

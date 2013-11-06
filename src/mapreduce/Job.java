@@ -4,11 +4,10 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.Socket;
 
-import dfs.DFSApi;
-
 import node.Scheduler;
 import socket.Message;
 import util.Constants;
+import dfs.DFSApi;
 
 /**
  * 
@@ -30,17 +29,21 @@ public class Job implements Serializable {
     private Class<?> ReducerKeyClass;
     private Class<?> ReducerValueClass;
 
-    public Job() {}
+    public Job() {
+    }
+
     public Job(int jobId) {
-    	this.jobID = jobId;
+        this.jobID = jobId;
     }
+
     public Job(String mapperClass) {
-    	this.MapperClass = mapperClass;
+        this.MapperClass = mapperClass;
     }
+
     public int getJobID() {
         return jobID;
     }
-    
+
     public void setJobID(int jobID) {
         this.jobID = jobID;
     }
@@ -122,10 +125,10 @@ public class Job implements Serializable {
         if (msgIn.getType() != Message.MSG_TYPE.WORK_COMPELETE) {
             sock.close();
             throw new Exception("Job failed");
-        }
-        else {
-        	Integer jobID = (Integer)msgIn.getContent();
-        	DFSApi.get(jobID + "##");
+        } else {
+            Integer jobID = (Integer) msgIn.getContent();
+            // user get file from dfs
+            DFSApi.get(jobID + "##");
         }
         sock.close();
     }
@@ -134,8 +137,8 @@ public class Job implements Serializable {
         // generate job ID
         int i = 0;
         while (i < 1000
-                && Scheduler.jobPool.containsKey(jobID = (int) (Math.random()
-                        * Constants.Random_Base))) {
+                && Scheduler.jobPool
+                        .containsKey(jobID = (int) (Math.random() * Constants.Random_Base))) {
             i++;
         }
         return i == 1000 ? false : true;

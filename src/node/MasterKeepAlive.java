@@ -13,42 +13,40 @@ import util.Constants;
  * fail without being reported
  */
 public class MasterKeepAlive extends Thread {
-	public void run() {
-		while (true) {
-			Message msg = new Message(Message.MSG_TYPE.KEEP_ALIVE, null);
-			ArrayList<SocketAddress> failList = new ArrayList<SocketAddress>();
-			// poll all slaves
-			for (SlaveInfo info : MasterMain.slavePool.values()) {
-				Socket sock = info.getSocket();
-				try {
-					msg.send(sock, null, -1);
-					if (Message.receive(sock, null, -1).getType() != Message.MSG_TYPE.KEEP_ALIVE) {
-						throw new Exception();
-					}
-				} catch (Exception e) {
-					// add to fail list
-					failList.add(sock.getRemoteSocketAddress());
-				}
-			}
-			//handle failure
-			if (failList.size() > 0) {
-				MasterMain.handleLeave(failList);
-			}
-			// remove failed nodes, other threads can not revise
-			// slavePool at this time
-			synchronized (MasterMain.slavePool) {
-				for (SocketAddress sockAdd : failList) {
-					MasterMain.slavePool.remove(sockAdd);
-				}
-			}
+    public void run() {
+        while (true) {
+            Message msg = new Message(Message.MSG_TYPE.KEEP_ALIVE, null);
+            ArrayList<SocketAddress> failList = new ArrayList<SocketAddress>();
+            // poll all slaves
+            for (SlaveInfo info : MasterMain.slavePool.values()) {
+                Socket sock = info.getSocket();
+                try {
+                    msg.send(sock, null, -1);
+                    if (Message.receive(sock, null, -1).getType() != Message.MSG_TYPE.KEEP_ALIVE) {
+                        throw new Exception();
+                    }
+                } catch (Exception e) {
+                    // add to fail list
+                    failList.add(sock.getRemoteSocketAddress());
+                }
+            }
+            // handle failure
+            if (failList.size() > 0) {
+                MasterMain.handleLeave(failList);
+            }
+            // remove failed nodes, other threads can not revise
+            // slavePool at this time
+            synchronized (MasterMain.slavePool) {
+                for (SocketAddress sockAdd : failList) {
+                    MasterMain.slavePool.remove(sockAdd);
+                }
+            }
 
-
-			
-			try {
-				sleep(Constants.KEEP_ALIVE_INT);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-	}
+            try {
+                sleep(Constants.KEEP_ALIVE_INT);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }

@@ -5,46 +5,46 @@ import java.util.ArrayList;
 
 public class JobInfo {
 
-	private int remainWorks;
-	private Socket sock;
-	private ArrayList<String> outSplitName;
-	private Job job;
-	
-	public JobInfo(Job job, Socket sock, int remainWorks) {
-		this.job = job;
-		this.sock = sock;
-		this.remainWorks = remainWorks;
-		outSplitName = new ArrayList<String>();
-		for (int i = 1; i <= remainWorks; i++) {
-			outSplitName.add(job.getJobID()+"##_"+ i + "_1");
-		}
-	}
+    private int remainWorks;
+    private Socket sock;
+    private ArrayList<String> outSplitName;
+    private Job job;
 
-	public int getRemainWorks() {
-		return remainWorks;
-	}
+    public JobInfo(Job job, Socket sock, int remainWorks) {
+        this.job = job;
+        this.sock = sock;
+        this.remainWorks = remainWorks;
+        outSplitName = new ArrayList<String>();
+        for (int i = 1; i <= remainWorks; i++) {
+            outSplitName.add(job.getJobID() + "##_" + i + "_1");
+        }
+    }
 
-	public void setRemainWorks(int remainWorks) {
-		this.remainWorks = remainWorks;
-	}
+    public int getRemainWorks() {
+        return remainWorks;
+    }
 
-	public Socket getSock() {
-		return sock;
-	}
+    public void setRemainWorks(int remainWorks) {
+        this.remainWorks = remainWorks;
+    }
 
-	public void setSock(Socket sock) {
-		this.sock = sock;
-	}
+    public Socket getSock() {
+        return sock;
+    }
 
-	public ArrayList<String> getOutSplitName() {
-		return outSplitName;
-	}
+    public void setSock(Socket sock) {
+        this.sock = sock;
+    }
 
-	public Job getJob() {
-		return job;
-	}
+    public ArrayList<String> getOutSplitName() {
+        return outSplitName;
+    }
 
-	public void setJob(Job job) {
-		this.job = job;
-	}
+    public Job getJob() {
+        return job;
+    }
+
+    public void setJob(Job job) {
+        this.job = job;
+    }
 }

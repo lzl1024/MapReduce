@@ -64,7 +64,7 @@ public class ReducerAckMsg implements Serializable {
     public void setJobID(int jobID) {
         this.jobID = jobID;
     }
-    
+
     public int getIndex() {
         return index;
     }
@@ -88,7 +88,9 @@ public class ReducerAckMsg implements Serializable {
     public void setReduceValue(Class<?> reduceValue) {
         this.reduceValue = reduceValue;
     }
+
     public String toString() {
-    	return this.ReducerClass + " " + this.mapperNum + " " + this.jobID + " " + this.index + " " + this.fileNames;
+        return this.ReducerClass + " " + this.mapperNum + " " + this.jobID
+                + " " + this.index + " " + this.fileNames;
     }
 }
