@@ -125,4 +125,8 @@ public class SlaveInfo {
 		}
 		
 	}
+	public String toString() {
+		return this.mapperTasks.toString() + " \n" + this.reducerTasks.toString() + " \n"
+				+ this.sockAddr + " " + this.port;
+	}
 }

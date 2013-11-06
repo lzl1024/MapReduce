@@ -137,11 +137,13 @@ public class MasterMain {
 	 */
 	public static void handleLeave(ArrayList<SocketAddress> removeList) {
 		// TODO reschedule its works
+		System.out.println("SlavePool is" + slavePool.toString());
 		ArrayList<SlaveInfo> slaveList = new ArrayList<SlaveInfo>(
                 MasterMain.slavePool.values());
-		
+		System.out.println("removeList is" + removeList);
 		for(SocketAddress sockAddr : removeList) {
 			//move its reduce jobs to other hosts
+		
 			for(Integer reduceTask :slavePool.get(sockAddr).getReducerTasks()) {
 				Collections.sort(slaveList, new SlaveInfo.ReducerPrio());
 		        int i;
@@ -184,8 +186,11 @@ public class MasterMain {
 			}
 		}
 		// delete the slave from pool
-		for (SocketAddress add : removeList) {
-			MasterMain.slavePool.remove(add);
+		synchronized(slavePool) {
+			for (SocketAddress add : removeList) {
+				MasterMain.slavePool.remove(add);
+			}
 		}
+		System.out.println("after : slavePool is" + slavePool.toString());
 	}
 }
