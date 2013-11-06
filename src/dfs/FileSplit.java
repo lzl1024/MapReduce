@@ -1,7 +1,6 @@
 package dfs;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -13,7 +12,6 @@ import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import node.MasterMain;
-import node.SlaveListen;
 import socket.Message;
 import util.Constants;
 
@@ -38,35 +36,38 @@ public class FileSplit {
 	 * @return file split names
 	 * @throws IOException
 	 */
-	private static String[] splitFile(String fileName, int replNum, int jobID)
+	private static ArrayList<String> splitFile(String fileName, int jobID)
 			throws IOException {
-		
-		PrintWriter[] pwList = new PrintWriter[replNum];
-		String[] splitNames = new String[replNum];
-
-
-		
-		// get split names
-		for (int i = 1; i <= replNum; i++) {
-			splitNames[i - 1] = Constants.FS_LOCATION + jobID + "_" + fileName + "_" + i;
-			pwList[i - 1] = new PrintWriter(new FileWriter(splitNames[i - 1]),
-					true);
-		}
-
-		// split file
+		ArrayList<String> splitNames = new ArrayList<String>();
 		int i = 0;
-		BufferedReader read = new BufferedReader(new FileReader(Constants.FS_LOCATION + fileName));
-		String record;
-		while ((record = read.readLine()) != null) {
-			pwList[i].println(record);
-			i = (i + 1) % replNum;
-		}
+		String splitName;
+		long currentSize = 0;
+		BufferedReader reader = new BufferedReader(new FileReader(
+				/*Constants.FS_LOCATION+*/	fileName));
+		String line = null;
+		PrintWriter pw = null;
 
-		// close files
-		read.close();
-		for (PrintWriter pw : pwList) {
-			pw.close();
+		while ((line = reader.readLine()) != null) {
+			// new split need to be add
+			if (i == 0 || currentSize + line.length() > Constants.ChunkSize) {
+				if (i != 0) {
+					pw.close();
+				}
+				i++;
+				splitName = /*Constants.FS_LOCATION + jobID + "_" +*/ fileName
+						+ "_" + i;
+				splitNames.add(splitName);
+				pw = new PrintWriter(new FileWriter(splitName));
+				currentSize = 0;
+			}
+
+			pw.println(line);
+			currentSize += line.length();
 		}
+		reader.close();
+
+		// update MapperNum
+		Constants.IdealMapperNum = i;
 
 		return splitNames;
 	}
@@ -83,10 +84,10 @@ public class FileSplit {
 	 * @throws IOException
 	 */
 	public static HashMap<String, ArrayList<SocketAddress>> fileDispatch(
-			ArrayList<Socket> freeMappers, String fileName, int replFac,
-			int mapperNum, int jobID) throws Exception {
+			ArrayList<Socket> freeMappers, String fileName, int jobID)
+			throws Exception {
 		// split the file
-		String[] fileSplits = splitFile(fileName, mapperNum, jobID);
+		ArrayList<String> fileSplits = splitFile(fileName, jobID);
 		ArrayList<SocketAddress> failedMappers = new ArrayList<SocketAddress>();
 		HashMap<String, ArrayList<SocketAddress>> returnLayout = new HashMap<String, ArrayList<SocketAddress>>();
 
@@ -115,7 +116,7 @@ public class FileSplit {
 			ArrayList<SocketAddress> splitSock = new ArrayList<SocketAddress>();
 
 			// dispatch replicas
-			for (int i = 0; i < replFac; i++) {
+			for (int i = 0; i < Constants.ReplFac; i++) {
 				try {
 					downloadREQ.send(freeMappers.get(mapperPointer), null, -1);
 					if (Message.receive(freeMappers.get(mapperPointer), null,
@@ -145,8 +146,9 @@ public class FileSplit {
 					freeMappers.remove(mapperPointer);
 
 					// too many free mappers fail!
-					if (freeMappers.size() < replFac) {
-						throw new Exception("Mapper not enough, the Whole Job Fails");
+					if (freeMappers.size() < Constants.ReplFac) {
+						throw new Exception(
+								"Mapper not enough, the Whole Job Fails");
 					}
 				}
 			}
@@ -177,8 +179,8 @@ public class FileSplit {
 	// for test
 	public static void main(String[] args) throws IOException {
 		new Constants(args[0]);
-		splitFile("src/fs/story1.txt", 2, 1);
-		
+		System.out.println(splitFile("src/fs/harrypotter.txt", 1));
+
 	}
 
 }

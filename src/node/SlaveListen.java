@@ -36,7 +36,7 @@ public class SlaveListen extends Thread {
 
 		}
 	}
-	
+
 	public SlaveListen(int port) {
 		try {
 			this.ListenSocket = new ServerSocket(port);
@@ -82,9 +82,10 @@ public class SlaveListen extends Thread {
 				} else if (msgIn.getType() == MSG_TYPE.GET_FILE) {
 					System.out
 							.println("Slave now is requested to send files to user");
-					
-					new SlaveSendFile(sock, (String) msgIn.getContent()).start();
-	
+
+					new SlaveSendFile(sock, (String) msgIn.getContent())
+							.start();
+
 				} else {
 					System.out.println("type is not FILE_DOWNLOAD.");
 				}

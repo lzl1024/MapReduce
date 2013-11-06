@@ -1,11 +1,5 @@
 package node;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
@@ -32,9 +26,10 @@ public class SlaveCompute extends Thread {
 	public static ArrayList<Thread> mapperThreadList = new ArrayList<Thread>();
 	public static HashMap<Integer, Thread> waitingThreadMap = new HashMap<Integer, Thread>();
 	public static HashMap<Integer, Integer> fileLeftMap = new HashMap<Integer, Integer>();
+
 	// constructor
-	public SlaveCompute(Socket sockToMaster) {
-		this.sockToMaster = sockToMaster;
+	public SlaveCompute(Socket sock) {
+		sockToMaster = sock;
 	}
 
 	public void run() {
@@ -43,7 +38,7 @@ public class SlaveCompute extends Thread {
 			Message msgIn = null;
 			try {
 				msgIn = Message.receive(sockToMaster, null, -1);
-				
+
 				switch (msgIn.getType()) {
 				case FILE_SPLIT_REQ:
 					// get the file split name, download the split and send ack
@@ -59,13 +54,15 @@ public class SlaveCompute extends Thread {
 					break;
 				case MAPPER_REQ:
 					// Create a thread to perform mapper task
-					Thread newMapper = new MapperPerform((MapperAckMsg) msgIn.getContent());
-					this.mapperThreadList.add(newMapper);
-							newMapper.start();
+					Thread newMapper = new MapperPerform(
+							(MapperAckMsg) msgIn.getContent());
+					mapperThreadList.add(newMapper);
+					newMapper.start();
 					break;
 				case REDUCER_REQ:
 					// Create a thread to perform reducer task
-					ReducerAckMsg msgContent = (ReducerAckMsg) msgIn.getContent();
+					ReducerAckMsg msgContent = (ReducerAckMsg) msgIn
+							.getContent();
 					int jobID = msgContent.getJobID();
 					Thread newReducer = new ReducerPerform(msgContent);
 					waitingThreadMap.put(jobID, newReducer);
@@ -76,12 +73,13 @@ public class SlaveCompute extends Thread {
 					recover(msgIn.getContent());
 					break;
 				case NOTIFY_PORT:
-					new SlaveListen((Integer)msgIn.getContent()).start();
+					new SlaveListen((Integer) msgIn.getContent()).start();
 					// send back to master same msg
 					msgIn.send(sockToMaster, null, -1);
 					break;
 				case CHANGE_REDUCELIST:
-					new SlaveChangeReduce((ChangeReduceMsg)msgIn.getContent()).start();
+					new SlaveChangeReduce((ChangeReduceMsg) msgIn.getContent())
+							.start();
 					break;
 				default:
 					break;
@@ -94,7 +92,6 @@ public class SlaveCompute extends Thread {
 			System.out.println(msgIn.getType() + " :handle success");
 		}
 	}
-
 
 	/**
 	 * get File split from master file system

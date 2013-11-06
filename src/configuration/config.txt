@@ -9,7 +9,6 @@ FileDownloadTimeout=20000
 RegularTimout=50000
 
 //Rule Configuration
-IdealMapperNum=2
 IdealReducerNum=2
 IdealMapperJobs=2
 IdealReducerJobs=2
@@ -18,3 +17,6 @@ ReplFac=2
 //Port realm
 startPort = 9000
 endPort = 10000
+
+//DFS Configuration
+ChunkSize=4194304

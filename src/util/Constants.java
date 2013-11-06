@@ -36,6 +36,8 @@ public class Constants {
 	public static int startPort;
 	// the end port
 	public static int endPort;
+	// chunk size
+	public static long ChunkSize;
 
 	/**
 	 * Initialized parameters
@@ -84,7 +86,12 @@ public class Constants {
 			MainRoutingPort = Integer.parseInt(args.get("MainRoutingPort"));
 			FileDownloadTimeout = Integer.parseInt(args
 					.get("FileDownloadTimeout"));
-			IdealMapperNum = Integer.parseInt(args.get("IdealMapperNum"));
+			if (args.get("IdealMapperNum") != null) {
+				IdealMapperNum = Integer.parseInt(args.get("IdealMapperNum"));
+			}
+			if (args.get("ChunkSize") != null) {
+				ChunkSize = Long.parseLong(args.get("ChunkSize"));
+			}
 			IdealReducerNum = Integer.parseInt(args.get("IdealReducerNum"));
 			SlaveActivePort = Integer.parseInt(args.get("SlaveActivePort"));
 			RegularTimout = Integer.parseInt(args.get("RegularTimout"));

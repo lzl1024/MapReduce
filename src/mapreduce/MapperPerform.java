@@ -4,11 +4,7 @@ import io.Context;
 import io.IntWritable;
 import io.Text;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -18,8 +14,8 @@ import java.util.ArrayList;
 
 import node.SlaveCompute;
 import node.SlaveListen;
-import socket.MapperAckMsg;
 import socket.CompleteMsg;
+import socket.MapperAckMsg;
 import socket.Message;
 import socket.Message.MSG_TYPE;
 import util.Constants;
