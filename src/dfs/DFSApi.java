@@ -8,6 +8,8 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 
+import mapreduce.UserDownload;
+
 import socket.CompleteMsg;
 import socket.Message;
 import socket.Message.MSG_TYPE;
@@ -35,30 +37,17 @@ public class DFSApi {
     	@SuppressWarnings("unchecked")
 		ArrayList<CompleteMsg> compleMsg = (ArrayList<CompleteMsg>)msgIn.getContent();
     	
-    	//receive and merge files
-    	DataOutputStream outStream = new DataOutputStream(new FileOutputStream(fileName));
-		int read_num;
+    	//receive files
     	for(CompleteMsg msg : compleMsg) {
     		
     		SocketAddress sockAddr = msg.getSockAddr();
     		String realFileName = msg.getSplitName();
     		System.out.println("sockAddr" + sockAddr + " filename is" + realFileName);
-    		Socket sock = new Socket();
-    		sock.connect(sockAddr);
     		
-    		DataInputStream inSocket = new DataInputStream(sock.getInputStream());
-			byte[] buf = new byte[Constants.BufferSize];
-			while((read_num = inSocket.read(buf)) != -1) {
-				outStream.write(buf, 0, read_num);
-				outStream.flush();
-			}
-			
-			sock.close();
-			inSocket.close();
-    		
-    		//new UserDownload(sockAddr, realFileName).start();
+    		new UserDownload(sockAddr, realFileName).start();
     	}
-    	outStream.close();
+
+    	socket.close();
     }
 
     public static void delete(String fileName) {
