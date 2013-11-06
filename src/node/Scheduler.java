@@ -12,12 +12,13 @@ import java.util.Map.Entry;
 
 import mapreduce.Job;
 import mapreduce.JobInfo;
-import socket.MapperAckMsg;
 import socket.CompleteMsg;
+import socket.MapperAckMsg;
 import socket.Message;
 import socket.Message.MSG_TYPE;
 import socket.ReducerAckMsg;
 import util.Constants;
+import dfs.DeleteFileThread;
 import dfs.FileSplit;
 import dfs.FileTransmitServer;
 
@@ -99,7 +100,11 @@ public class Scheduler extends Thread {
                     // complete the whole work
                     if (remain == 0) {
                         System.out.println(FileSplit.splitLayout);
-                        deleteFile(jobInfo.getOutSplitName(), jobInfo.getJob());
+
+                        // delete the file in master and in itself
+                        deleteFile(Integer
+                                .toString(jobInfo.getJob().getJobID()));
+
                         new Message(Message.MSG_TYPE.WORK_COMPELETE, jobInfo
                                 .getJob().getJobID()).send(jobInfo.getSock(),
                                 null, -1);
@@ -139,20 +144,8 @@ public class Scheduler extends Thread {
                 case FILE_REQ:
                     // reply the get file request and choose tell user which
                     // node to find
-                    String reqFileName = (String) msg.getContent();
-                    ArrayList<CompleteMsg> result = new ArrayList<CompleteMsg>();
-
-                    for (String e : FileSplit.splitLayout.keySet()) {
-                        if (e.startsWith(reqFileName)) {
-                            ArrayList<SocketAddress> sockAddrList = FileSplit.splitLayout
-                                    .get(e);
-                            SocketAddress targetAddr = sockAddrList.get(0);
-                            result.add(new CompleteMsg(e, MasterMain.slavePool
-                                    .get(targetAddr).getSocketAddr(), null));
-
-                        }
-                    }
-                    System.out.println(result);
+                    ArrayList<CompleteMsg> result = findFiles((String) msg
+                            .getContent());
                     new Message(MSG_TYPE.FILE_REQ, result).send(sock, null, -1);
                     break;
                 case PUT_FILE:
@@ -175,9 +168,14 @@ public class Scheduler extends Thread {
                     for (SlaveInfo slave : slaveList) {
                         targets.add(slave.getSocket());
                     }
-                    
+
                     FileSplit.fileDispatch(targets, (String) msg.getContent(),
                             -1);
+                    break;
+                case DELETE_FILE:
+                    new Message(MSG_TYPE.DELETE_FILE, null)
+                            .send(sock, null, -1);
+                    deleteFile((String) msg.getContent());
                     break;
                 default:
                     throw new IOException();
@@ -186,6 +184,31 @@ public class Scheduler extends Thread {
                 e.printStackTrace();
             }
         }
+    }
+
+    /**
+     * find file splits in file system
+     * 
+     * @param filename
+     * @return
+     */
+    private ArrayList<CompleteMsg> findFiles(String filename) {
+        String reqFileName = filename;
+        ArrayList<CompleteMsg> result = new ArrayList<CompleteMsg>();
+
+        for (String e : FileSplit.splitLayout.keySet()) {
+            if (e.startsWith(reqFileName)) {
+                ArrayList<SocketAddress> sockAddrList = FileSplit.splitLayout
+                        .get(e);
+                SocketAddress targetAddr = sockAddrList.get(0);
+                result.add(new CompleteMsg(e, MasterMain.slavePool.get(
+                        targetAddr).getSocketAddr(), null));
+
+            }
+        }
+        System.out.println(result);
+
+        return result;
     }
 
     /**
@@ -342,10 +365,26 @@ public class Scheduler extends Thread {
      * @param outSplitName
      * @param job
      */
-    private void deleteFile(ArrayList<String> outSplitName, Job job) {
-        System.out.println(outSplitName);
-        outSplitName = outSplitName;
-        // TODO: we can do this as soon as work is done.
+    private void deleteFile(String fileName) {
+        fileName = fileName + "_";
+        ArrayList<SocketAddress> failList = new ArrayList<SocketAddress>();
 
+        // let slaves to search their local fs to delete file
+        for (SlaveInfo slave : MasterMain.slavePool.values()) {
+            try {
+                new Message(MSG_TYPE.DELETE_FILE, fileName).send(
+                        slave.getSocket(), null, -1);
+            } catch (Exception e) {
+                System.out.println("delete file failed");
+                failList.add(slave.getSocket().getRemoteSocketAddress());
+            }
+        }
+
+        if (failList.size() > 0) {
+            MasterMain.handleLeave(failList);
+        }
+        
+        //delete file splits in master
+        new DeleteFileThread(fileName).start();
     }
 }

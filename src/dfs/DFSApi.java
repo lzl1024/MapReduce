@@ -102,6 +102,17 @@ public class DFSApi {
     }
 
     public static void delete(String fileName) {
+        Socket socket;
+        try {
+            socket = new Socket(Constants.MasterIp, Constants.SlaveActivePort);
+            // send file to master
+            new Message(MSG_TYPE.DELETE_FILE, fileName).send(socket, null, -1);
+            Message.receive(socket, null, -1);
+            socket.close();
+        } catch (Exception e) {
+            System.out.println("fail to commuicate with Master");
+            System.exit(-1);
+        }
 
     }
 }

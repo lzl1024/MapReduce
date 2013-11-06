@@ -139,8 +139,9 @@ public class Job implements Serializable {
             throw new Exception("Job failed");
         } else {
             Integer jobID = (Integer) msgIn.getContent();
-            // user get file from dfs
-            DFSApi.get(jobID + "##", this.outputFile, false);
+            // user get file from dfs and delete file from dfs
+            DFSApi.get(jobID + "##", this.outputFile, true);
+            DFSApi.delete(jobID + "##");
         }
         sock.close();
     }

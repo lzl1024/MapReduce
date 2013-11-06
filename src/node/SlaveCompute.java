@@ -12,6 +12,7 @@ import socket.MapperAckMsg;
 import socket.Message;
 import socket.ReducerAckMsg;
 import util.Constants;
+import dfs.DeleteFileThread;
 import dfs.FileTransmitServer;
 
 /**
@@ -81,6 +82,9 @@ public class SlaveCompute extends Thread {
                     new SlaveChangeReduce((ChangeReduceMsg) msgIn.getContent())
                             .start();
                     break;
+                case DELETE_FILE:
+                    new DeleteFileThread((String) msgIn.getContent()).start();
+                    break;
                 default:
                     break;
                 }
@@ -116,4 +120,5 @@ public class SlaveCompute extends Thread {
         // TODO Auto-generated method stub
         content = content;
     }
+
 }
