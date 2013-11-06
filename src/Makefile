@@ -15,6 +15,9 @@ slave: all
 exp1:  all 
 	java examples.Exp1WordCountMain ${ConfigFile} ${InputPath1} ${OutputPath1}
 
+exp2:  all 
+	java examples.Exp2DFS ${ConfigFile} ${InputPath1} ${OutputPath1}
+
 clean:
 	find . -name *.class | xargs rm -rf >> a.out
 	find -name *.class | xargs rm -rf >> a.out

@@ -1,8 +1,12 @@
 package dfs;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.FileOutputStream;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import socket.CompleteMsg;
 import socket.Message;
@@ -19,14 +23,18 @@ public class DFSApi {
     public static void put(String fileName) throws Exception {
         Socket socket = new Socket(Constants.MasterIp,
                 Constants.SlaveActivePort);
-
         // send file to master
-        new Message(MSG_TYPE.PUT_FILE, fileName).send(socket, null, -1);
+        new Message(MSG_TYPE.PUT_FILE_FS, fileName).send(socket, null, -1);
 
+        FileTransmitServer.sendFile(Constants.FS_LOCATION + fileName, socket);
+        if (!socket.isClosed()) {
+            socket.close();
+        }
     }
 
     @SuppressWarnings("unchecked")
-    public static void get(String fileName) throws Exception {
+    public static void get(String fileName, String newName, boolean getSplits)
+            throws Exception {
         String newfileName = Constants.FS_LOCATION + fileName + "_";
         Socket socket = new Socket(Constants.MasterIp,
                 Constants.SlaveActivePort);
@@ -41,18 +49,52 @@ public class DFSApi {
         ArrayList<CompleteMsg> compleMsg = (ArrayList<CompleteMsg>) msgIn
                 .getContent();
 
-        // request files
-        for (CompleteMsg msg : compleMsg) {
+        // get splits
+        if (getSplits) {
+            // request files
+            for (CompleteMsg msg : compleMsg) {
 
-            SocketAddress sockAddr = msg.getSockAddr();
-            String realFileName = msg.getSplitName();
-            System.out.println("sockAddr" + sockAddr + " filename is"
-                    + realFileName);
+                SocketAddress sockAddr = msg.getSockAddr();
+                String realFileName = msg.getSplitName();
+                System.out.println("sockAddr" + sockAddr + " filename is"
+                        + realFileName);
 
-            Socket sock = new Socket();
-            sock.connect(sockAddr);
-            new Message(MSG_TYPE.GET_FILE, realFileName).send(sock, null, -1);
-            new FileTransmitServer.SlaveDownload(sock, realFileName).start();
+                Socket sock = new Socket();
+                sock.connect(sockAddr);
+                new Message(MSG_TYPE.GET_FILE, realFileName).send(sock, null,
+                        -1);
+                new FileTransmitServer.SlaveDownload(sock, realFileName)
+                        .start();
+            }
+        } else {
+            // get merged files
+            Collections.sort(compleMsg, new CompleteMsg.NamePrio());
+            // receive and merge files
+            DataOutputStream outStream = new DataOutputStream(
+                    new FileOutputStream(Constants.FS_LOCATION + newName));
+            for (CompleteMsg msg : compleMsg) {
+
+                SocketAddress sockAddr = msg.getSockAddr();
+                String realFileName = msg.getSplitName();
+                Socket sock = new Socket();
+                sock.connect(sockAddr);
+                new Message(MSG_TYPE.GET_FILE, realFileName).send(sock, null,
+                        -1);
+
+                DataInputStream inSocket = new DataInputStream(
+                        sock.getInputStream());
+                byte[] buf = new byte[Constants.BufferSize];
+                int read_num;
+                while ((read_num = inSocket.read(buf)) != -1) {
+                    outStream.write(buf, 0, read_num);
+                    outStream.flush();
+                }
+
+                sock.close();
+                inSocket.close();
+                System.out.println("receive file successfully");
+            }
+            outStream.close();
         }
 
         socket.close();

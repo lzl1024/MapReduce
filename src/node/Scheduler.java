@@ -19,6 +19,7 @@ import socket.Message.MSG_TYPE;
 import socket.ReducerAckMsg;
 import util.Constants;
 import dfs.FileSplit;
+import dfs.FileTransmitServer;
 
 /**
  * Master listen active message from slave
@@ -68,7 +69,6 @@ public class Scheduler extends Thread {
                 // new Job comes
                 case NEW_JOB:
                     try {
-
                         handleJob((Job) msg.getContent(), sock);
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -115,34 +115,33 @@ public class Scheduler extends Thread {
 
                     MasterMain.slavePool.get(receiveMsg.getSockAddr())
                             .getMapperTasks().remove(receiveMsg.getSplitName());
-//                    System.out.println("Mapper FS Layout: "
-//                            + FileSplit.splitLayout);
-//
-//                    FileSplit.splitLayout.get(receiveMsg.getSplitName())
-//                            .remove(receiveMsg.getSockAddr());
-//                    if (FileSplit.splitLayout.get(receiveMsg.getSplitName())
-//                            .size() == 0) {
-//                        FileSplit.splitLayout.remove(receiveMsg.getSplitName());
-//                    } // add the splits number in slave
-//                    MasterMain.slavePool.get(receiveMsg.getSockAddr())
-//                            .setSplits(
-//                                    MasterMain.slavePool.get(
-//                                            receiveMsg.getSockAddr())
-//                                            .getSplits() - 1);
+                    // System.out.println("Mapper FS Layout: "
+                    // + FileSplit.splitLayout);
+                    //
+                    // FileSplit.splitLayout.get(receiveMsg.getSplitName())
+                    // .remove(receiveMsg.getSockAddr());
+                    // if (FileSplit.splitLayout.get(receiveMsg.getSplitName())
+                    // .size() == 0) {
+                    // FileSplit.splitLayout.remove(receiveMsg.getSplitName());
+                    // } // add the splits number in slave
+                    // MasterMain.slavePool.get(receiveMsg.getSockAddr())
+                    // .setSplits(
+                    // MasterMain.slavePool.get(
+                    // receiveMsg.getSockAddr())
+                    // .getSplits() - 1);
                     System.out.println("After Mapper FS Layout: "
                             + FileSplit.splitLayout);
 
                     new Message(MSG_TYPE.MAPPER_COMPLETE, null).send(sock,
                             null, -1);
                     break;
+
                 case FILE_REQ:
                     // reply the get file request and choose tell user which
                     // node to find
                     String reqFileName = (String) msg.getContent();
                     ArrayList<CompleteMsg> result = new ArrayList<CompleteMsg>();
 
-                    // here is some error I think ...diff between JOBID_## and
-                    // JOBID_
                     for (String e : FileSplit.splitLayout.keySet()) {
                         if (e.startsWith(reqFileName)) {
                             ArrayList<SocketAddress> sockAddrList = FileSplit.splitLayout
@@ -155,6 +154,30 @@ public class Scheduler extends Thread {
                     }
                     System.out.println(result);
                     new Message(MSG_TYPE.FILE_REQ, result).send(sock, null, -1);
+                    break;
+                case PUT_FILE:
+                    // user put request, upload file to the master
+                    // wait for split by map task
+                    FileTransmitServer.receiveFile((String) msg.getContent(),
+                            sock);
+                    break;
+                case PUT_FILE_FS:
+                    // user put request, upload file to the master and split
+                    // the file by split load balance
+                    FileTransmitServer.receiveFile(Constants.FS_LOCATION
+                            + (String) msg.getContent(), sock);
+
+                    // sort slave according to file load and dispatch
+                    ArrayList<SlaveInfo> slaveList = new ArrayList<SlaveInfo>(
+                            MasterMain.slavePool.values());
+                    Collections.sort(slaveList, new SlaveInfo.FilePrio());
+                    ArrayList<Socket> targets = new ArrayList<Socket>();
+                    for (SlaveInfo slave : slaveList) {
+                        targets.add(slave.getSocket());
+                    }
+                    
+                    FileSplit.fileDispatch(targets, (String) msg.getContent(),
+                            -1);
                     break;
                 default:
                     throw new IOException();
@@ -218,12 +241,14 @@ public class Scheduler extends Thread {
                 break;
             }
         }
+
         if (reducerList.size() == 0) {
             System.out.println("All reducers are full.");
             System.exit(0);
         } else {
             System.out.println("reducer size is " + reducerList.size());
         }
+
         // schedule mappers
         HashSet<SocketAddress> takedSock = new HashSet<SocketAddress>();
         // if every one in the list has a job, choose index failIterate

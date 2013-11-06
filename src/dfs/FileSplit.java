@@ -1,6 +1,7 @@
 package dfs;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -76,6 +77,9 @@ public class FileSplit {
         // update MapperNum
         Constants.IdealMapperNum = i;
 
+        //delete the original file
+        new File(Constants.FS_LOCATION + fileName).delete();
+
         return splitNames;
     }
 
@@ -95,6 +99,7 @@ public class FileSplit {
             throws Exception {
         // split the file
         ArrayList<String> fileSplits = splitFile(fileName, jobID);
+        
         ArrayList<SocketAddress> failedMappers = new ArrayList<SocketAddress>();
         HashMap<String, ArrayList<SocketAddress>> returnLayout = new HashMap<String, ArrayList<SocketAddress>>();
 

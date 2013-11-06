@@ -2,6 +2,7 @@ package socket;
 
 import java.io.Serializable;
 import java.net.SocketAddress;
+import java.util.Comparator;
 
 public class CompleteMsg implements Serializable {
 	
@@ -41,4 +42,12 @@ public class CompleteMsg implements Serializable {
 		return this.jobID + " " + this.sockAddr + " " + this.splitName;
 	}
 
+	public static class NamePrio implements Comparator<CompleteMsg> {
+
+        @Override
+        public int compare(CompleteMsg arg0, CompleteMsg arg1) {
+            return arg0.splitName.compareTo(arg1.splitName);
+        }
+	    
+	}
 }

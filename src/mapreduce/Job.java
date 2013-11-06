@@ -8,6 +8,7 @@ import node.Scheduler;
 import socket.Message;
 import util.Constants;
 import dfs.DFSApi;
+import dfs.FileTransmitServer;
 
 /**
  * 
@@ -119,8 +120,19 @@ public class Job implements Serializable {
         }
 
         Socket sock = new Socket(Constants.MasterIp, Constants.SlaveActivePort);
-        // send the job to master and wait for completion
+
+        // send file to server
+        String fileName = Constants.FS_LOCATION + this.inputFile;
+        new Message(Message.MSG_TYPE.PUT_FILE, fileName).send(sock, null, -1);
+        FileTransmitServer.sendFile(fileName, sock);
+        if (!sock.isClosed()) {
+            sock.close();
+        }
+
+        sock = new Socket(Constants.MasterIp, Constants.SlaveActivePort);
+        // send the job to master and and wait for completion
         new Message(Message.MSG_TYPE.NEW_JOB, this).send(sock, null, -1);
+
         Message msgIn = Message.receive(sock, null, -1);
         if (msgIn.getType() != Message.MSG_TYPE.WORK_COMPELETE) {
             sock.close();
@@ -128,7 +140,7 @@ public class Job implements Serializable {
         } else {
             Integer jobID = (Integer) msgIn.getContent();
             // user get file from dfs
-            DFSApi.get(jobID + "##");
+            DFSApi.get(jobID + "##", this.outputFile, false);
         }
         sock.close();
     }
