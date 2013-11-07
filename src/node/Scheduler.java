@@ -423,6 +423,21 @@ public class Scheduler extends Thread {
         fileName = fileName + "_";
         ArrayList<SocketAddress> failList = new ArrayList<SocketAddress>();
 
+        // update splitLayout in case of concurrent problem
+        ArrayList<String> deleteList = new ArrayList<String>();
+        String newFileName = Constants.FS_LOCATION + fileName;
+
+        for (String name : FileSplit.splitLayout.keySet()) {
+            if (name.startsWith(newFileName)) {
+                deleteList.add(name);
+            }
+        }
+        synchronized (FileSplit.splitLayout) {
+            for (String name : deleteList) {
+                FileSplit.splitLayout.remove(name);
+            }
+        }
+
         // let slaves to search their local fs to delete file
         for (SlaveInfo slave : MasterMain.slavePool.values()) {
             try {
@@ -434,20 +449,6 @@ public class Scheduler extends Thread {
             }
         }
 
-        // update splitLayout
-        ArrayList<String> deleteList = new ArrayList<String>();
-        fileName = Constants.FS_LOCATION + fileName;
-
-        for (String name : FileSplit.splitLayout.keySet()) {
-            if (name.startsWith(fileName)) {
-                deleteList.add(name);
-            }
-        }
-        synchronized (FileSplit.splitLayout) {
-            for (String name : deleteList) {
-                FileSplit.splitLayout.remove(name);
-            }
-        }
         System.out.println("After delete:" + FileSplit.splitLayout);
         if (failList.size() > 0) {
             MasterMain.handleLeave(failList);
