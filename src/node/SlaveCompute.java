@@ -10,6 +10,7 @@ import java.util.HashMap;
 import mapreduce.MapperPerform;
 import mapreduce.ReducerPerform;
 import socket.ChangeReduceMsg;
+import socket.CompleteMsg;
 import socket.MapperAckMsg;
 import socket.Message;
 import socket.Message.MSG_TYPE;
@@ -76,10 +77,10 @@ public class SlaveCompute extends Thread {
                     fileLeftMap.put(jobID, msgContent.getfileNames().size());
                     System.out.println(fileLeftMap);
                     break;
-                case NODE_FAIL_ACK:
-                    // node repaired
-                    recover(msgIn.getContent());
-                    break;
+                // case NODE_FAIL_ACK:
+                // // node repaired
+                // recover(msgIn.getContent());
+                // break;
                 case NOTIFY_PORT:
                     new SlaveListen((Integer) msgIn.getContent()).start();
                     // send back to master same msg
@@ -97,6 +98,17 @@ public class SlaveCompute extends Thread {
                             findRecord((RecordWrapperMsg) msgIn.getContent()))
                             .send(sockToMaster, null, -1);
                     break;
+                case FILE_DOWNLOAD:
+                    // get file from another slave
+                    CompleteMsg downloadMsg = (CompleteMsg) msgIn.getContent();
+                    Socket downloadSocket = new Socket();
+                    downloadSocket.connect(downloadMsg.getSockAddr());
+
+                    new Message(MSG_TYPE.GET_FILE, downloadMsg.getSplitName())
+                            .send(downloadSocket, null, -1);
+                    new FileTransmitServer.SlaveDownload(downloadSocket,
+                            downloadMsg.getSplitName());
+                    break;
                 default:
                     break;
                 }
@@ -109,14 +121,12 @@ public class SlaveCompute extends Thread {
         }
     }
 
-
     private String findRecord(RecordWrapperMsg content) {
         long last = content.getRecordNum();
         String fileName = content.getFileName();
 
         try {
-            BufferedReader reader = new BufferedReader(new FileReader(
-                    fileName));
+            BufferedReader reader = new BufferedReader(new FileReader(fileName));
 
             String line = null;
             while (last-- > 0 && (line = reader.readLine()) != null)
@@ -148,9 +158,9 @@ public class SlaveCompute extends Thread {
      * 
      * @param content
      */
-    private void recover(Object content) {
-        // TODO Auto-generated method stub
-        content = content;
-    }
+    // private void recover(Object content) {
+    // // TODO Auto-generated method stub
+    // content = content;
+    // }
 
 }

@@ -7,10 +7,12 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import mapreduce.Job;
 import socket.ChangeReduceMsg;
+import socket.CompleteMsg;
 import socket.Message;
 import socket.Message.MSG_TYPE;
 import util.Constants;
@@ -30,6 +32,7 @@ import dfs.FileTransmitServer;
 public class MasterMain {
     // pool to record the slave socket
     public static ConcurrentHashMap<SocketAddress, SlaveInfo> slavePool = new ConcurrentHashMap<SocketAddress, SlaveInfo>();
+    public static ConcurrentHashMap<SocketAddress, SocketAddress> listenToActive = new ConcurrentHashMap<SocketAddress, SocketAddress>();
     public static int curPort;
 
     public static void main(String[] args) {
@@ -100,6 +103,10 @@ public class MasterMain {
                 if (Message.receive(sock, null, -1).getType() == MSG_TYPE.NOTIFY_PORT) {
                     slavePool.put(sock.getRemoteSocketAddress(), new SlaveInfo(
                             sock, MasterMain.curPort));
+                    listenToActive.put(
+                            slavePool.get(sock.getRemoteSocketAddress())
+                                    .getSocketAddr(), sock
+                                    .getRemoteSocketAddress());
                 } else {
                     throw new Exception();
                 }
@@ -137,15 +144,39 @@ public class MasterMain {
      * @param content
      */
     public static void handleLeave(ArrayList<SocketAddress> removeList) {
+
         // TODO reschedule its works
         System.out.println("SlavePool is" + slavePool.toString());
         ArrayList<SlaveInfo> slaveList = new ArrayList<SlaveInfo>(
                 MasterMain.slavePool.values());
         System.out.println("removeList is" + removeList);
-        for (SocketAddress sockAddr : removeList) {
-            // move its reduce jobs to other hosts
 
-            for (Integer reduceTask : slavePool.get(sockAddr).getReducerTasks()) {
+        ArrayList<SlaveInfo> removed = new ArrayList<SlaveInfo>();
+        for (SocketAddress add : removeList) {
+            removed.add(slavePool.get(add));
+        }
+
+        // delete the slave from pool, in case of the new mapper fail
+        synchronized (slavePool) {
+            for (SocketAddress add : removeList) {
+                MasterMain.slavePool.remove(add);
+                MasterMain.listenToActive.remove(MasterMain.slavePool.get(add)
+                        .getSocketAddr());
+            }
+        }
+
+        if (slavePool.size() == 0) {
+            System.out.println("Leave all!");
+            System.exit(0);
+        }
+
+        for (int k = 0; k < removeList.size(); k++) {
+            SocketAddress sockAddr = removeList.get(k);
+            // relocate its files
+            handleFile(sockAddr);
+
+            // move its reduce jobs to other hosts
+            for (Integer reduceTask : removed.get(k).getReducerTasks()) {
                 Collections.sort(slaveList, new SlaveInfo.ReducerPrio());
                 int i;
                 for (i = 0; i < slaveList.size(); i++) {
@@ -172,7 +203,7 @@ public class MasterMain {
                 }
             }
             // move its map jobs to other hosts
-            for (String fileSplit : slavePool.get(sockAddr).getMapperTasks()) {
+            for (String fileSplit : removed.get(k).getMapperTasks()) {
                 boolean flag = false;
                 ArrayList<SocketAddress> sockAddrList = FileSplit.splitLayout
                         .get(fileSplit);
@@ -194,12 +225,61 @@ public class MasterMain {
                 }
             }
         }
-        // delete the slave from pool
-        synchronized (slavePool) {
-            for (SocketAddress add : removeList) {
-                MasterMain.slavePool.remove(add);
+
+        System.out.println("after : slavePool is" + slavePool.toString());
+    }
+
+    private static void handleFile(SocketAddress sockAddr) {
+        // searcj all the files it have
+        ArrayList<SlaveInfo> slave = new ArrayList<SlaveInfo>(
+                MasterMain.slavePool.values());
+        int it = 0;
+
+        for (Entry<String, ArrayList<SocketAddress>> entry : FileSplit.splitLayout
+                .entrySet()) {
+            if (entry.getValue().contains(sockAddr)) {
+                // find file, and get receiver
+                entry.getValue().remove(sockAddr);
+                if (entry.getValue().size() == 0) {
+                    System.out.println("No replica any more : "
+                            + entry.getKey());
+                    System.exit(-1);
+                }
+
+                int cur = 0;
+                Socket reciever = null;
+                while (cur < slave.size()) {
+                    Socket tmp = slave.get(it).getSocket();
+                    if (!entry.getValue()
+                            .contains(tmp.getRemoteSocketAddress())) {
+                        reciever = tmp;
+                        break;
+                    }
+                    cur++;
+                    it = (it + 1) % slave.size();
+                }
+
+                if (cur == slave.size()) {
+                    System.out.println("All of other has file : "
+                            + entry.getKey());
+                    continue;
+                }
+
+                // find sender active address
+                SocketAddress sender = slavePool.get(entry.getValue().get(0))
+                        .getSocketAddr();
+                CompleteMsg msg = new CompleteMsg(entry.getKey(), sender, null);
+                try {
+                    new Message(MSG_TYPE.FILE_DOWNLOAD, msg).send(reciever,
+                            null, -1);
+                } catch (Exception e) {
+                    ArrayList<SocketAddress> add = new ArrayList<SocketAddress>();
+                    add.add(reciever.getRemoteSocketAddress());
+                    handleLeave(add);
+                }
+                break;
             }
         }
-        System.out.println("after : slavePool is" + slavePool.toString());
+
     }
 }

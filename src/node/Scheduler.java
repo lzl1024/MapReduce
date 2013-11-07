@@ -50,20 +50,24 @@ public class Scheduler extends Thread {
                 // and remove it from slavePool
                 case SLAVE_QUIT:
                     ArrayList<SocketAddress> tmp = new ArrayList<SocketAddress>();
-                    tmp.add(sock.getRemoteSocketAddress());
+                    tmp.add((SocketAddress) msg.getContent());
                     MasterMain.handleLeave(tmp);
                     msg.send(sock, null, -1);
                     break;
                 // mapper will find its reducer fail, master handles the fail
                 // send back fail_ack
                 case NODE_FAIL:
-                    ArrayList<SocketAddress> content = (ArrayList<SocketAddress>) msg
-                            .getContent();
-                    try {
-                        new Message(Message.MSG_TYPE.NODE_FAIL_ACK, null).send(
-                                sock, null, -1);
-                    } catch (Exception e) {
-                        content.add(sock.getRemoteSocketAddress());
+                    ArrayList<SocketAddress> content = new ArrayList<SocketAddress>();
+                    // try {
+                    // new Message(Message.MSG_TYPE.NODE_FAIL_ACK, null).send(
+                    // sock, null, -1);
+                    // } catch (Exception e) {
+                    // content.add(sock.getRemoteSocketAddress());
+                    // }
+
+                    for (SocketAddress add : (ArrayList<SocketAddress>) msg
+                            .getContent()) {
+                        content.add(MasterMain.listenToActive.get(add));
                     }
                     MasterMain.handleLeave(content);
                     break;
@@ -432,7 +436,7 @@ public class Scheduler extends Thread {
 
         // update splitLayout
         ArrayList<String> deleteList = new ArrayList<String>();
-        fileName = Constants.FS_LOCATION+ fileName;
+        fileName = Constants.FS_LOCATION + fileName;
 
         for (String name : FileSplit.splitLayout.keySet()) {
             if (name.startsWith(fileName)) {
@@ -444,7 +448,7 @@ public class Scheduler extends Thread {
                 FileSplit.splitLayout.remove(name);
             }
         }
-System.out.println("After delete:" + FileSplit.splitLayout);
+        System.out.println("After delete:" + FileSplit.splitLayout);
         if (failList.size() > 0) {
             MasterMain.handleLeave(failList);
         }
