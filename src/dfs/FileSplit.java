@@ -29,16 +29,24 @@ public class FileSplit {
     public static ConcurrentHashMap<String, ArrayList<SocketAddress>> splitLayout = new ConcurrentHashMap<String, ArrayList<SocketAddress>>();
 
     /**
+     * The layout of records range, key: fileName, value: record number of each
+     * split
+     */
+    public static ConcurrentHashMap<String, ArrayList<Long>> recordLayout = new ConcurrentHashMap<String, ArrayList<Long>>();
+
+    /**
      * split the file according to its file name and replication factor
      * 
      * @param fileName
      * @param replNum
      * @param jobID
+     * @param recordEnd
+     * @param recordBegin
      * @return file split names
      * @throws IOException
      */
-    private static ArrayList<String> splitFile(String fileName, int jobID)
-            throws IOException {
+    private static ArrayList<String> splitFile(String fileName, int jobID,
+            Long recordBegin, Long recordEnd) throws IOException {
         ArrayList<String> splitNames = new ArrayList<String>();
         int i = 0;
         String splitName;
@@ -47,11 +55,24 @@ public class FileSplit {
                 Constants.FS_LOCATION + fileName));
         String line = null;
         PrintWriter pw = null;
+        
+        //record layout
+        long records = 1L;
+        ArrayList<Long> lineLayout = new ArrayList<Long>();
 
-        while ((line = reader.readLine()) != null) {
+        // ignore first records
+        while (recordBegin != null && recordBegin > records &&
+             (line = reader.readLine()) != null) {
+                records++;
+        }
+
+        // ignore back records if needed
+        while ((line = reader.readLine()) != null
+                && (recordEnd == null || records <= recordEnd)) {
             // new split need to be add
             if (i == 0 || currentSize + line.length() > Constants.ChunkSize) {
                 if (i != 0) {
+                    lineLayout.add(records);
                     pw.close();
                 }
                 i++;
@@ -71,13 +92,19 @@ public class FileSplit {
 
             pw.println(line);
             currentSize += line.length();
+            records++;
         }
         reader.close();
+        pw.close();
+        
+        //update layout
+        lineLayout.add(records-1);
+        recordLayout.put(fileName, lineLayout);
 
         // update MapperNum
         Constants.IdealMapperNum = i;
 
-        //delete the original file
+        // delete the original file
         new File(Constants.FS_LOCATION + fileName).delete();
 
         return splitNames;
@@ -95,11 +122,12 @@ public class FileSplit {
      * @throws IOException
      */
     public static HashMap<String, ArrayList<SocketAddress>> fileDispatch(
-            ArrayList<Socket> freeMappers, String fileName, int jobID)
-            throws Exception {
+            ArrayList<Socket> freeMappers, String fileName, int jobID,
+            Long recordBegin, Long recordEnd) throws Exception {
         // split the file
-        ArrayList<String> fileSplits = splitFile(fileName, jobID);
-        
+        ArrayList<String> fileSplits = splitFile(fileName, jobID, recordBegin,
+                recordEnd);
+
         ArrayList<SocketAddress> failedMappers = new ArrayList<SocketAddress>();
         HashMap<String, ArrayList<SocketAddress>> returnLayout = new HashMap<String, ArrayList<SocketAddress>>();
 
@@ -145,7 +173,7 @@ public class FileSplit {
                         tmp.add(key);
                         splitLayout.put(fileSplit, tmp);
                     }
-                    //add the splits number in slave
+                    // add the splits number in slave
                     MasterMain.slavePool.get(key).setSplits(
                             MasterMain.slavePool.get(key).getSplits() + 1);
 
@@ -193,7 +221,7 @@ public class FileSplit {
     // for test
     public static void main(String[] args) throws IOException {
         new Constants(args[0]);
-        System.out.println(splitFile("src/fs/harrypotter.txt", 1));
+        System.out.println(splitFile("src/fs/harrypotter.txt", 1, null, null));
 
     }
 

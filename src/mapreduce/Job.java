@@ -29,6 +29,8 @@ public class Job implements Serializable {
     private String outputFile;
     private Class<?> ReducerKeyClass;
     private Class<?> ReducerValueClass;
+    private Long recordBegin;
+    private Long recordEnd;
 
     public Job() {
     }
@@ -105,6 +107,22 @@ public class Job implements Serializable {
         ReducerValueClass = reducerValueClass;
     }
 
+    public Long getRecordBegin() {
+        return recordBegin;
+    }
+
+    public void setRecordBegin(Long recordBegin) {
+        this.recordBegin = recordBegin;
+    }
+
+    public Long getRecordEnd() {
+        return recordEnd;
+    }
+
+    public void setRecordEnd(Long recordEnd) {
+        this.recordEnd = recordEnd;
+    }
+
     /**
      * Wait job to complete
      * 
@@ -140,7 +158,8 @@ public class Job implements Serializable {
         } else {
             Integer jobID = (Integer) msgIn.getContent();
             // user get file from dfs and delete file from dfs
-            DFSApi.get(jobID + "##", this.outputFile, true);
+            // if output file is set get the merged file
+            DFSApi.get(jobID + "##", this.outputFile, this.outputFile == null);
             DFSApi.delete(jobID + "##");
         }
         sock.close();

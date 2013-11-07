@@ -10,6 +10,7 @@ import mapreduce.ReducerPerform;
 import socket.ChangeReduceMsg;
 import socket.MapperAckMsg;
 import socket.Message;
+import socket.Message.MSG_TYPE;
 import socket.ReducerAckMsg;
 import util.Constants;
 import dfs.DeleteFileThread;
@@ -61,6 +62,8 @@ public class SlaveCompute extends Thread {
                     newMapper.start();
                     break;
                 case REDUCER_REQ:
+                    new Message(MSG_TYPE.REDUCER_REQ, null).send(sockToMaster,
+                            null, -1);
                     // Create a thread to perform reducer task
                     ReducerAckMsg msgContent = (ReducerAckMsg) msgIn
                             .getContent();
@@ -68,6 +71,7 @@ public class SlaveCompute extends Thread {
                     Thread newReducer = new ReducerPerform(msgContent);
                     waitingThreadMap.put(jobID, newReducer);
                     fileLeftMap.put(jobID, msgContent.getfileNames().size());
+                    System.out.println(fileLeftMap);
                     break;
                 case NODE_FAIL_ACK:
                     // node repaired

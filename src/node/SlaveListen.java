@@ -36,14 +36,14 @@ public class SlaveListen extends Thread {
                     FileTransmitServer.receiveFile(receiveFileName
                             + Constants.REFUCE_FILE_SUFFIX, sock);
 
-                    System.out.println("receiveFilename in slaveListen"
+                    System.out.println("receiveFilename in slaveListen "
                             + receiveFileName);
 
                     int jobId = Integer.parseInt(receiveFileName.substring(
                             Constants.FS_LOCATION.length(),
                             receiveFileName.indexOf("_")));
 
-                    System.out.println("JobID in slavelisten" + jobId);
+                    System.out.println("JobID in slavelisten " + jobId);
                     SlaveCompute.fileLeftMap.put(jobId,
                             SlaveCompute.fileLeftMap.get(jobId) - 1);
 

@@ -24,6 +24,8 @@ public class Exp1WordCountMain {
         job.setReducerClass("Exp1WordCountReducer");
         job.setReducerKeyClass(Text.class);
         job.setReducerValueClass(IntWritable.class);
+        job.setRecordBegin(10L);
+        job.setRecordEnd(11L);
 
         try {
             job.waitForCompletion(args[0]);

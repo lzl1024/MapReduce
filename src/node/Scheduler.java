@@ -1,5 +1,8 @@
 package node;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -18,9 +21,9 @@ import socket.Message;
 import socket.Message.MSG_TYPE;
 import socket.ReducerAckMsg;
 import util.Constants;
-import dfs.DeleteFileThread;
 import dfs.FileSplit;
 import dfs.FileTransmitServer;
+import dfs.RecordWrapper;
 
 /**
  * Master listen active message from slave
@@ -170,12 +173,17 @@ public class Scheduler extends Thread {
                     }
 
                     FileSplit.fileDispatch(targets, (String) msg.getContent(),
-                            -1);
+                            -1, null, null);
                     break;
                 case DELETE_FILE:
                     new Message(MSG_TYPE.DELETE_FILE, null)
                             .send(sock, null, -1);
                     deleteFile((String) msg.getContent());
+                    break;
+                case RANDOM_RECORD:
+                    new Message(MSG_TYPE.RANDOM_RECORD,
+                            findRecord((RecordWrapper) msg.getContent())).send(
+                            sock, null, -1);
                     break;
                 default:
                     throw new IOException();
@@ -184,6 +192,47 @@ public class Scheduler extends Thread {
                 e.printStackTrace();
             }
         }
+    }
+
+    /**
+     * find the record in file splits layout
+     * 
+     * @param recordWrapper
+     * @return
+     */
+    private String findRecord(RecordWrapper recordWrapper) {
+        Long last = 0L;
+        ArrayList<Long> singleLayout = FileSplit.recordLayout.get(recordWrapper
+                .getFileName());
+        int i;
+        for (i = 0; i < singleLayout.size(); i++) {
+            if (last < recordWrapper.getRecordNum()
+                    && singleLayout.get(i) >= recordWrapper.getRecordNum()) {
+                break;
+            }
+            last = singleLayout.get(i);
+        }
+
+        // find which file has the record, go and get it
+        if (i < singleLayout.size()) {
+            String fileName = Constants.FS_LOCATION
+                    + recordWrapper.getFileName() + "_" + (i + 1);
+            last = recordWrapper.getRecordNum() - last;
+            try {
+                BufferedReader reader = new BufferedReader(new FileReader(
+                        fileName));
+
+                String line = null;
+                while (last-- > 0 && (line = reader.readLine()) != null)
+                    ;
+                reader.close();
+                return line;
+            } catch (Exception e) {
+                System.out.println("Get record from " + fileName + " error");
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -224,6 +273,10 @@ public class Scheduler extends Thread {
             throw new Exception("Fail to generate Job ID");
         }
 
+        // add to job pool
+        JobInfo jobInfo = new JobInfo(job, jobSock, Constants.IdealReducerNum);
+        jobPool.put(job.getJobID(), jobInfo);
+
         // get free mappers
         ArrayList<SlaveInfo> slaveList = new ArrayList<SlaveInfo>(
                 MasterMain.slavePool.values());
@@ -244,7 +297,7 @@ public class Scheduler extends Thread {
         HashMap<String, ArrayList<SocketAddress>> layout;
         try {
             layout = FileSplit.fileDispatch(freeMappers, job.getInputFile(),
-                    job.getJobID());
+                    job.getJobID(), job.getRecordBegin(), job.getRecordEnd());
             System.out.println("Current FS Layout: " + FileSplit.splitLayout);
         } catch (Exception e) {
             e.printStackTrace();
@@ -298,9 +351,6 @@ public class Scheduler extends Thread {
             }
         }
 
-        // add to job pool
-        JobInfo jobInfo = new JobInfo(job, jobSock, Constants.IdealReducerNum);
-        jobPool.put(job.getJobID(), jobInfo);
     }
 
     /**
@@ -320,6 +370,7 @@ public class Scheduler extends Thread {
             MasterMain.slavePool.get(socket.getRemoteSocketAddress())
                     .getReducerTasks().add(job.getJobID());
             new Message(MSG_TYPE.REDUCER_REQ, msg).send(socket, null, -1);
+            Message.receive(socket, null, -1);
 
         } catch (Exception e) {
             System.out.println("Invite reducer failed");
@@ -366,25 +417,21 @@ public class Scheduler extends Thread {
      * @param job
      */
     private void deleteFile(String fileName) {
-        fileName = fileName + "_";
-        ArrayList<SocketAddress> failList = new ArrayList<SocketAddress>();
-
-        // let slaves to search their local fs to delete file
-        for (SlaveInfo slave : MasterMain.slavePool.values()) {
-            try {
-                new Message(MSG_TYPE.DELETE_FILE, fileName).send(
-                        slave.getSocket(), null, -1);
-            } catch (Exception e) {
-                System.out.println("delete file failed");
-                failList.add(slave.getSocket().getRemoteSocketAddress());
-            }
-        }
-
-        if (failList.size() > 0) {
-            MasterMain.handleLeave(failList);
-        }
-        
-        //delete file splits in master
-        new DeleteFileThread(fileName).start();
+        /*
+         * fileName = fileName + "_"; ArrayList<SocketAddress> failList = new
+         * ArrayList<SocketAddress>();
+         * 
+         * // let slaves to search their local fs to delete file for (SlaveInfo
+         * slave : MasterMain.slavePool.values()) { try { new
+         * Message(MSG_TYPE.DELETE_FILE, fileName).send( slave.getSocket(),
+         * null, -1); } catch (Exception e) {
+         * System.out.println("delete file failed");
+         * failList.add(slave.getSocket().getRemoteSocketAddress()); } }
+         * 
+         * if (failList.size() > 0) { MasterMain.handleLeave(failList); }
+         * 
+         * // delete file splits in master new
+         * DeleteFileThread(fileName).start();
+         */
     }
 }

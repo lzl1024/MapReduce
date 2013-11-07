@@ -115,4 +115,23 @@ public class DFSApi {
         }
 
     }
+    
+    public static String readRecord(Long recordNum, String fileName) {
+        Socket socket;
+        String record = null;
+        try {
+            socket = new Socket(Constants.MasterIp, Constants.SlaveActivePort);
+            // send file to master
+            new Message(MSG_TYPE.RANDOM_RECORD, new RecordWrapper(recordNum, fileName))
+            .send(socket, null, -1);
+            record = (String) Message.receive(socket, null, -1).getContent();
+            socket.close();
+        } catch (Exception e) {
+            System.out.println("fail to commuicate with Master");
+            System.exit(-1);
+        }
+        
+        return record;
+    }
+    
 }
