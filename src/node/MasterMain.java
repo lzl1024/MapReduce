@@ -272,6 +272,8 @@ public class MasterMain {
                 try {
                     new Message(MSG_TYPE.FILE_DOWNLOAD, msg).send(reciever,
                             null, -1);
+                    //update layout
+                    FileSplit.splitLayout.get(entry).add(reciever.getRemoteSocketAddress());
                 } catch (Exception e) {
                     ArrayList<SocketAddress> add = new ArrayList<SocketAddress>();
                     add.add(reciever.getRemoteSocketAddress());
