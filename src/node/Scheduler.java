@@ -1,8 +1,5 @@
 package node;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -19,11 +16,11 @@ import socket.CompleteMsg;
 import socket.MapperAckMsg;
 import socket.Message;
 import socket.Message.MSG_TYPE;
+import socket.RecordWrapperMsg;
 import socket.ReducerAckMsg;
 import util.Constants;
 import dfs.FileSplit;
 import dfs.FileTransmitServer;
-import dfs.RecordWrapper;
 
 /**
  * Master listen active message from slave
@@ -182,8 +179,8 @@ public class Scheduler extends Thread {
                     break;
                 case RANDOM_RECORD:
                     new Message(MSG_TYPE.RANDOM_RECORD,
-                            findRecord((RecordWrapper) msg.getContent())).send(
-                            sock, null, -1);
+                            findRecord((RecordWrapperMsg) msg.getContent()))
+                            .send(sock, null, -1);
                     break;
                 default:
                     throw new IOException();
@@ -200,7 +197,7 @@ public class Scheduler extends Thread {
      * @param recordWrapper
      * @return
      */
-    private String findRecord(RecordWrapper recordWrapper) {
+    private String findRecord(RecordWrapperMsg recordWrapper) {
         Long last = 0L;
         ArrayList<Long> singleLayout = FileSplit.recordLayout.get(recordWrapper
                 .getFileName());
@@ -219,14 +216,15 @@ public class Scheduler extends Thread {
                     + recordWrapper.getFileName() + "_" + (i + 1);
             last = recordWrapper.getRecordNum() - last;
             try {
-                BufferedReader reader = new BufferedReader(new FileReader(
-                        fileName));
+                Socket sock = MasterMain.slavePool.get(
+                        FileSplit.splitLayout.get(fileName).get(0)).getSocket();
 
-                String line = null;
-                while (last-- > 0 && (line = reader.readLine()) != null)
-                    ;
-                reader.close();
-                return line;
+                RecordWrapperMsg msgContent = new RecordWrapperMsg(last,
+                        fileName);
+                new Message(MSG_TYPE.RANDOM_RECORD, msgContent).send(sock,
+                        null, -1);
+
+                return (String) Message.receive(sock, null, -1).getContent();
             } catch (Exception e) {
                 System.out.println("Get record from " + fileName + " error");
             }
@@ -417,21 +415,39 @@ public class Scheduler extends Thread {
      * @param job
      */
     private void deleteFile(String fileName) {
-        /*
-         * fileName = fileName + "_"; ArrayList<SocketAddress> failList = new
-         * ArrayList<SocketAddress>();
-         * 
-         * // let slaves to search their local fs to delete file for (SlaveInfo
-         * slave : MasterMain.slavePool.values()) { try { new
-         * Message(MSG_TYPE.DELETE_FILE, fileName).send( slave.getSocket(),
-         * null, -1); } catch (Exception e) {
-         * System.out.println("delete file failed");
-         * failList.add(slave.getSocket().getRemoteSocketAddress()); } }
-         * 
-         * if (failList.size() > 0) { MasterMain.handleLeave(failList); }
-         * 
-         * // delete file splits in master new
-         * DeleteFileThread(fileName).start();
-         */
+
+        fileName = fileName + "_";
+        ArrayList<SocketAddress> failList = new ArrayList<SocketAddress>();
+
+        // let slaves to search their local fs to delete file
+        for (SlaveInfo slave : MasterMain.slavePool.values()) {
+            try {
+                new Message(MSG_TYPE.DELETE_FILE, fileName).send(
+                        slave.getSocket(), null, -1);
+            } catch (Exception e) {
+                System.out.println("delete file failed");
+                failList.add(slave.getSocket().getRemoteSocketAddress());
+            }
+        }
+
+        // update splitLayout
+        ArrayList<String> deleteList = new ArrayList<String>();
+        fileName = Constants.FS_LOCATION+ fileName;
+
+        for (String name : FileSplit.splitLayout.keySet()) {
+            if (name.startsWith(fileName)) {
+                deleteList.add(name);
+            }
+        }
+        synchronized (FileSplit.splitLayout) {
+            for (String name : deleteList) {
+                FileSplit.splitLayout.remove(name);
+            }
+        }
+System.out.println("After delete:" + FileSplit.splitLayout);
+        if (failList.size() > 0) {
+            MasterMain.handleLeave(failList);
+        }
+
     }
 }

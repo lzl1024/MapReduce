@@ -10,6 +10,7 @@ import java.util.Collections;
 
 import socket.CompleteMsg;
 import socket.Message;
+import socket.RecordWrapperMsg;
 import socket.Message.MSG_TYPE;
 import util.Constants;
 
@@ -122,7 +123,7 @@ public class DFSApi {
         try {
             socket = new Socket(Constants.MasterIp, Constants.SlaveActivePort);
             // send file to master
-            new Message(MSG_TYPE.RANDOM_RECORD, new RecordWrapper(recordNum, fileName))
+            new Message(MSG_TYPE.RANDOM_RECORD, new RecordWrapperMsg(recordNum, fileName))
             .send(socket, null, -1);
             record = (String) Message.receive(socket, null, -1).getContent();
             socket.close();

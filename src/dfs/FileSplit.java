@@ -215,6 +215,11 @@ public class FileSplit {
 
         MasterMain.handleLeave(failedMappers);
 
+        // delete file splits in master
+        for (String file : fileSplits){
+            new File(file).delete();
+        }
+
         return returnLayout;
     }
 

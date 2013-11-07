@@ -1,5 +1,7 @@
 package node;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
@@ -11,6 +13,7 @@ import socket.ChangeReduceMsg;
 import socket.MapperAckMsg;
 import socket.Message;
 import socket.Message.MSG_TYPE;
+import socket.RecordWrapperMsg;
 import socket.ReducerAckMsg;
 import util.Constants;
 import dfs.DeleteFileThread;
@@ -89,6 +92,11 @@ public class SlaveCompute extends Thread {
                 case DELETE_FILE:
                     new DeleteFileThread((String) msgIn.getContent()).start();
                     break;
+                case RANDOM_RECORD:
+                    new Message(MSG_TYPE.RANDOM_RECORD,
+                            findRecord((RecordWrapperMsg) msgIn.getContent()))
+                            .send(sockToMaster, null, -1);
+                    break;
                 default:
                     break;
                 }
@@ -99,6 +107,26 @@ public class SlaveCompute extends Thread {
             }
             System.out.println(msgIn.getType() + " :handle success");
         }
+    }
+
+
+    private String findRecord(RecordWrapperMsg content) {
+        long last = content.getRecordNum();
+        String fileName = content.getFileName();
+
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(
+                    fileName));
+
+            String line = null;
+            while (last-- > 0 && (line = reader.readLine()) != null)
+                ;
+            reader.close();
+            return line;
+        } catch (Exception e) {
+            System.out.println("Get record from " + fileName + " error");
+        }
+        return null;
     }
 
     /**
