@@ -175,9 +175,6 @@ public class FileSplit {
 
                     mapperPointer = (mapperPointer + 1) % freeMappers.size();
                 } catch (Exception e) {
-                    e.printStackTrace();
-                    System.out.println(Constants.FileDownloadTimeout);
-                    System.out.println(splitLayout);
                     // add to fail mapper list if timeout
                     failedMappers.add(MasterMain.listenToActive.get(freeMappers
                             .get(mapperPointer)));
