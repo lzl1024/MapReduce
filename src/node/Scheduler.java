@@ -58,12 +58,6 @@ public class Scheduler extends Thread {
                 // send back fail_ack
                 case NODE_FAIL:
                     ArrayList<SocketAddress> content = new ArrayList<SocketAddress>();
-                    // try {
-                    // new Message(Message.MSG_TYPE.NODE_FAIL_ACK, null).send(
-                    // sock, null, -1);
-                    // } catch (Exception e) {
-                    // content.add(sock.getRemoteSocketAddress());
-                    // }
 
                     for (SocketAddress add : (ArrayList<SocketAddress>) msg
                             .getContent()) {
