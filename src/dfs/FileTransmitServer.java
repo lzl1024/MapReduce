@@ -58,7 +58,6 @@ public class FileTransmitServer implements HttpHandler {
     public static void httpDownload(String urlAddr, String filename) {
 
         try {
-            System.out.printf("Download %s to %s\n", urlAddr, filename);
             URLConnection conn = new URL(urlAddr).openConnection();
             InputStream in = conn.getInputStream();
             FileOutputStream fs = new FileOutputStream(filename);
@@ -84,6 +83,9 @@ public class FileTransmitServer implements HttpHandler {
      */
     public static void sendFile(String fileName, Socket socket)
             throws IOException {
+        System.out.println("send File: " + fileName + ", sock: "
+                + socket.getRemoteSocketAddress());
+
         DataInputStream file = new DataInputStream(new BufferedInputStream(
                 new FileInputStream(fileName)));
         DataOutputStream sockdata = new DataOutputStream(
@@ -105,6 +107,7 @@ public class FileTransmitServer implements HttpHandler {
      */
     public static void receiveFile(String fileName, Socket sock)
             throws IOException {
+
         DataInputStream sockData = new DataInputStream(new BufferedInputStream(
                 sock.getInputStream()));
         DataOutputStream file = new DataOutputStream(new BufferedOutputStream(
@@ -116,8 +119,11 @@ public class FileTransmitServer implements HttpHandler {
             file.write(buf, 0, readNum);
         }
         file.close();
+        
+        System.out.println("receive File: " + fileName + ", sock: "
+                + sock.getRemoteSocketAddress());
     }
-    
+
     /**
      * Download file from other slaves
      */
@@ -134,19 +140,16 @@ public class FileTransmitServer implements HttpHandler {
         public void run() {
             try {
                 FileTransmitServer.receiveFile(fileName, sock);
-                if (!sock.isClosed()){
+                if (!sock.isClosed()) {
                     sock.close();
                 }
             } catch (Exception e) {
                 System.out.println("receive file unsuccessfully");
                 e.printStackTrace();
             }
-
-            System.out.println("receive file successfully");
         }
     }
 
-    
     // Thread to send file
     public static class SlaveSendFile extends Thread {
 
@@ -161,7 +164,7 @@ public class FileTransmitServer implements HttpHandler {
         public void run() {
             try {
                 FileTransmitServer.sendFile(fileName, sock);
-                if (!sock.isClosed()){
+                if (!sock.isClosed()) {
                     sock.close();
                 }
             } catch (Exception e) {

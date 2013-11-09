@@ -174,6 +174,7 @@ public class MasterMain {
         for (int k = 0; k < removeList.size(); k++) {
             SocketAddress sockAddr = removeList.get(k);
             // relocate its files
+            System.out.println(k + " " + removeList.size());
             handleFile(sockAddr);
 
             // move its reduce jobs to other hosts
@@ -227,7 +228,6 @@ public class MasterMain {
             }
         }
 
-        System.out.println("after : slavePool is" + slavePool.toString());
     }
 
     private static void handleFile(SocketAddress sockAddr) {
@@ -273,16 +273,16 @@ public class MasterMain {
                 try {
                     new Message(MSG_TYPE.FILE_DOWNLOAD, msg).send(reciever,
                             null, -1);
-                    //update layout
-                    FileSplit.splitLayout.get(entry).add(reciever.getRemoteSocketAddress());
+                    // update layout
+                    FileSplit.splitLayout.get(entry.getKey()).add(
+                            reciever.getRemoteSocketAddress());
                 } catch (Exception e) {
                     ArrayList<SocketAddress> add = new ArrayList<SocketAddress>();
                     add.add(reciever.getRemoteSocketAddress());
                     handleLeave(add);
                 }
-                break;
             }
         }
-
+        System.out.println("handle file: " + FileSplit.splitLayout);
     }
 }

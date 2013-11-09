@@ -107,7 +107,7 @@ public class SlaveCompute extends Thread {
                     new Message(MSG_TYPE.GET_FILE, downloadMsg.getSplitName())
                             .send(downloadSocket, null, -1);
                     new FileTransmitServer.SlaveDownload(downloadSocket,
-                            downloadMsg.getSplitName());
+                            downloadMsg.getSplitName()).start();
                     break;
                 default:
                     break;
