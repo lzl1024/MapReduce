@@ -1,7 +1,6 @@
 package node;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
@@ -16,12 +15,7 @@ import socket.CompleteMsg;
 import socket.Message;
 import socket.Message.MSG_TYPE;
 import util.Constants;
-
-import com.sun.net.httpserver.HttpHandler;
-import com.sun.net.httpserver.HttpServer;
-
 import dfs.FileSplit;
-import dfs.FileTransmitServer;
 
 /**
  * The master node, contains scheduler
@@ -46,19 +40,6 @@ public class MasterMain {
             System.exit(1);
         }
 
-        // open file transmit server
-        InetSocketAddress addr = new InetSocketAddress(
-                Constants.FiledispatchPort);
-        HttpServer server = null;
-        try {
-            server = HttpServer.create(addr, 0);
-            final HttpHandler handler = new FileTransmitServer();
-            server.createContext("/", handler);
-            server.start();
-        } catch (IOException e) {
-            System.out.println("Create Server Failed");
-        }
-
         // start scheduler
         Scheduler scheduler = new Scheduler();
         scheduler.start();
@@ -70,8 +51,6 @@ public class MasterMain {
 
         // start main routine
         executing(scheduler);
-
-        server.stop(0);
         System.exit(0);
     }
 

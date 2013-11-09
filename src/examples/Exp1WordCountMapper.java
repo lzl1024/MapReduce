@@ -2,6 +2,7 @@ package examples;
 
 import io.Context;
 import io.IntWritable;
+import io.LongWritable;
 import io.Text;
 import mapreduce.Mapper;
 
@@ -13,7 +14,7 @@ import mapreduce.Mapper;
 public class Exp1WordCountMapper extends Mapper {
 
     @Override
-    public void map(IntWritable key, Text value, Context context) {
+    public void map(LongWritable key, Text value, Context context) {
         String line = value.get();
         String[] words = line.split("\\s+");
 

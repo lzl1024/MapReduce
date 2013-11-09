@@ -1,7 +1,7 @@
 package mapreduce;
 
 import io.Context;
-import io.IntWritable;
+import io.LongWritable;
 import io.Text;
 
 import java.io.BufferedReader;
@@ -47,12 +47,12 @@ public class MapperPerform extends Thread {
             Mapper mapper = (Mapper) objConstructor.newInstance();
 
             String record;
-            int i = 0;
+            long i = 0;
 
             Context context = new Context(reducerList.size(), splitName);
             // process records line by line
             while ((record = reader.readLine()) != null) {
-                mapper.map(new IntWritable(++i), new Text(record), context);
+                mapper.map(new LongWritable(++i), new Text(record), context);
             }
             // close context
             if (!context.isClose()) {

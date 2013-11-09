@@ -150,9 +150,9 @@ public class Scheduler extends Thread {
                     ArrayList<SlaveInfo> slaveList = new ArrayList<SlaveInfo>(
                             MasterMain.slavePool.values());
                     Collections.sort(slaveList, new SlaveInfo.FilePrio());
-                    ArrayList<Socket> targets = new ArrayList<Socket>();
+                    ArrayList<SocketAddress> targets = new ArrayList<SocketAddress>();
                     for (SlaveInfo slave : slaveList) {
-                        targets.add(slave.getSocket());
+                        targets.add(slave.getSocketAddr());
                     }
 
                     FileSplit.fileDispatch(targets, (String) msg.getContent(),
@@ -265,14 +265,14 @@ public class Scheduler extends Thread {
         ArrayList<SlaveInfo> slaveList = new ArrayList<SlaveInfo>(
                 MasterMain.slavePool.values());
         Collections.sort(slaveList, new SlaveInfo.MapperPrio());
-        ArrayList<Socket> freeMappers = new ArrayList<Socket>();
+        ArrayList<SocketAddress> freeMappers = new ArrayList<SocketAddress>();
 
         int i = 0;
         while (i < slaveList.size()
                 && slaveList.get(i).getMapperTasks().size() <= Constants.IdealMapperJobs) {
-            freeMappers.add(slaveList.get(i).getSocket());
+            freeMappers.add(slaveList.get(i).getSocketAddr());
             System.out.println("free Mapper is "
-                    + slaveList.get(i).getSocket().getRemoteSocketAddress());
+                    + slaveList.get(i).getSocketAddr());
             i++;
 
         }

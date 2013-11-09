@@ -70,6 +70,13 @@ public class SlaveListen extends Thread {
                     new FileTransmitServer.SlaveSendFile(sock,
                             (String) msgIn.getContent()).start();
                     break;
+                case FILE_SPLIT_REQ:
+                    FileTransmitServer.receiveFile((String) msgIn.getContent()
+                            , sock);
+                    if (!sock.isClosed()) {
+                        sock.close();
+                    }
+                    break;
                 default:
                     System.out.println("type is not defined");
                 }

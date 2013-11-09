@@ -6,7 +6,7 @@ MasterIp=localhost
 
 //Network Configuration
 FileDownloadTimeout=20000
-RegularTimout=50000
+RegularTimout=5000
 
 //Rule Configuration
 IdealReducerNum=2

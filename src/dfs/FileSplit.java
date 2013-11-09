@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import node.MasterMain;
 import socket.Message;
+import socket.Message.MSG_TYPE;
 import util.Constants;
 
 /**
@@ -55,15 +56,15 @@ public class FileSplit {
                 Constants.FS_LOCATION + fileName));
         String line = null;
         PrintWriter pw = null;
-        
-        //record layout
+
+        // record layout
         long records = 1L;
         ArrayList<Long> lineLayout = new ArrayList<Long>();
 
         // ignore first records
-        while (recordBegin != null && recordBegin > records &&
-             (line = reader.readLine()) != null) {
-                records++;
+        while (recordBegin != null && recordBegin > records
+                && (line = reader.readLine()) != null) {
+            records++;
         }
 
         // ignore back records if needed
@@ -96,9 +97,9 @@ public class FileSplit {
         }
         reader.close();
         pw.close();
-        
-        //update layout
-        lineLayout.add(records-1);
+
+        // update layout
+        lineLayout.add(records - 1);
         recordLayout.put(fileName, lineLayout);
 
         // update MapperNum
@@ -122,7 +123,7 @@ public class FileSplit {
      * @throws IOException
      */
     public static HashMap<String, ArrayList<SocketAddress>> fileDispatch(
-            ArrayList<Socket> freeMappers, String fileName, int jobID,
+            ArrayList<SocketAddress> freeMappers, String fileName, int jobID,
             Long recordBegin, Long recordEnd) throws Exception {
         // split the file
         ArrayList<String> fileSplits = splitFile(fileName, jobID, recordBegin,
@@ -132,40 +133,32 @@ public class FileSplit {
         HashMap<String, ArrayList<SocketAddress>> returnLayout = new HashMap<String, ArrayList<SocketAddress>>();
 
         int mapperPointer = 0;
-        // set time out
-        while (mapperPointer < freeMappers.size()) {
-            try {
-                freeMappers.get(mapperPointer).setSoTimeout(
-                        Constants.FileDownloadTimeout);
-                mapperPointer++;
-            } catch (Exception e) {
-                // add to fail mapper list if timeout
-                failedMappers.add(freeMappers.get(mapperPointer)
-                        .getRemoteSocketAddress());
-                freeMappers.remove(mapperPointer);
-            }
-        }
 
         // send file splits to different host use round robin when free mapper
         // not enough or failed
         mapperPointer = 0;
         for (String fileSplit : fileSplits) {
-            Message downloadREQ = new Message(Message.MSG_TYPE.FILE_SPLIT_REQ,
+            Message downloadREQ = new Message(MSG_TYPE.FILE_SPLIT_REQ,
                     fileSplit);
             ArrayList<SocketAddress> splitSock = new ArrayList<SocketAddress>();
 
             // dispatch replicas
             for (int i = 0; i < Constants.ReplFac; i++) {
                 try {
-                    downloadREQ.send(freeMappers.get(mapperPointer), null, -1);
-                    if (Message.receive(freeMappers.get(mapperPointer), null,
-                            -1).getType() != Message.MSG_TYPE.FILE_SPLIT_ACK) {
-                        throw new Exception("Host Fail");
+                    Socket fileSocket = new Socket();
+
+                    fileSocket.connect(freeMappers.get(mapperPointer));
+                    downloadREQ.send(fileSocket, null, -1);
+
+                    FileTransmitServer.sendFile(fileSplit, fileSocket);
+                    if (!fileSocket.isClosed()) {
+                        fileSocket.close();
                     }
 
                     // download success, add record that which mapper get split
-                    SocketAddress key = freeMappers.get(mapperPointer)
-                            .getRemoteSocketAddress();
+                    SocketAddress key = MasterMain.listenToActive
+                            .get(freeMappers.get(mapperPointer));
+
                     if (splitLayout.containsKey(fileSplit)) {
                         splitLayout.get(fileSplit).add(key);
                     } else {
@@ -182,9 +175,12 @@ public class FileSplit {
 
                     mapperPointer = (mapperPointer + 1) % freeMappers.size();
                 } catch (Exception e) {
+                    e.printStackTrace();
+                    System.out.println(Constants.FileDownloadTimeout);
+                    System.out.println(splitLayout);
                     // add to fail mapper list if timeout
-                    failedMappers.add(freeMappers.get(mapperPointer)
-                            .getRemoteSocketAddress());
+                    failedMappers.add(MasterMain.listenToActive.get(freeMappers
+                            .get(mapperPointer)));
                     freeMappers.remove(mapperPointer);
 
                     // too many free mappers fail!
@@ -198,25 +194,10 @@ public class FileSplit {
             returnLayout.put(fileSplit, splitSock);
         }
 
-        mapperPointer = 0;
-        // restore time out
-        while (mapperPointer < freeMappers.size()) {
-            try {
-                freeMappers.get(mapperPointer).setSoTimeout(
-                        Constants.RegularTimout);
-                mapperPointer++;
-            } catch (Exception e) {
-                // add to fail mapper list if timeout
-                failedMappers.add(freeMappers.get(mapperPointer)
-                        .getRemoteSocketAddress());
-                freeMappers.remove(mapperPointer);
-            }
-        }
-
         MasterMain.handleLeave(failedMappers);
 
         // delete file splits in master
-        for (String file : fileSplits){
+        for (String file : fileSplits) {
             new File(file).delete();
         }
 

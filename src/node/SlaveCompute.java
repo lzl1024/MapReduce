@@ -16,7 +16,6 @@ import socket.Message;
 import socket.Message.MSG_TYPE;
 import socket.RecordWrapperMsg;
 import socket.ReducerAckMsg;
-import util.Constants;
 import dfs.DeleteFileThread;
 import dfs.FileTransmitServer;
 
@@ -46,14 +45,6 @@ public class SlaveCompute extends Thread {
                 msgIn = Message.receive(sockToMaster, null, -1);
 
                 switch (msgIn.getType()) {
-                case FILE_SPLIT_REQ:
-                    // get the file split name, download the split and send ack
-                    // back
-                    getFileSplit((String) msgIn.getContent());
-
-                    new Message(Message.MSG_TYPE.FILE_SPLIT_ACK, null).send(
-                            sockToMaster, null, -1);
-                    break;
                 case KEEP_ALIVE:
                     // Keep alive poll, send the message back
                     msgIn.send(sockToMaster, null, -1);
@@ -77,10 +68,6 @@ public class SlaveCompute extends Thread {
                     fileLeftMap.put(jobID, msgContent.getfileNames().size());
                     System.out.println(fileLeftMap);
                     break;
-                // case NODE_FAIL_ACK:
-                // // node repaired
-                // recover(msgIn.getContent());
-                // break;
                 case NOTIFY_PORT:
                     new SlaveListen((Integer) msgIn.getContent()).start();
                     // send back to master same msg
@@ -138,29 +125,4 @@ public class SlaveCompute extends Thread {
         }
         return null;
     }
-
-    /**
-     * get File split from master file system
-     * 
-     * @param splitName
-     */
-    private void getFileSplit(String splitName) {
-        String masterUrl = Constants.HTTP_PREFIX + Constants.MasterIp + ":"
-                + Constants.FiledispatchPort + "/" + splitName;
-        FileTransmitServer.httpDownload(masterUrl, splitName);
-    }
-
-    /**
-     * fail node recover, check failedCache, send file to new reducer and update
-     * failedCache (failure may happen again). Also, when update cache, need to
-     * go through the failedCache to see if no split is here now. if no, send
-     * MAPPER_COMLETE to info master
-     * 
-     * @param content
-     */
-    // private void recover(Object content) {
-    // // TODO Auto-generated method stub
-    // content = content;
-    // }
-
 }
