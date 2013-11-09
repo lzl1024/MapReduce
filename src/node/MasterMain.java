@@ -159,9 +159,10 @@ public class MasterMain {
         // delete the slave from pool, in case of the new mapper fail
         synchronized (slavePool) {
             for (SocketAddress add : removeList) {
-                MasterMain.slavePool.remove(add);
                 MasterMain.listenToActive.remove(MasterMain.slavePool.get(add)
                         .getSocketAddr());
+                MasterMain.slavePool.remove(add);
+
             }
         }
 
@@ -230,7 +231,7 @@ public class MasterMain {
     }
 
     private static void handleFile(SocketAddress sockAddr) {
-        // searcj all the files it have
+        // search all the files it have
         ArrayList<SlaveInfo> slave = new ArrayList<SlaveInfo>(
                 MasterMain.slavePool.values());
         int it = 0;
