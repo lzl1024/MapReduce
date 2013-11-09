@@ -65,6 +65,8 @@ public class MasterMain {
 
         // keep alive process start
         new MasterKeepAlive().start();
+        
+        new MasterManager().start();
 
         // start main routine
         executing(scheduler);
@@ -83,7 +85,6 @@ public class MasterMain {
             System.exit(0);
         }
 
-        // int i = 0;
         // manage join
         while (true) {
             Socket sock = null;
@@ -111,27 +112,10 @@ public class MasterMain {
                     throw new Exception();
                 }
 
-                // i++;
-                // if (i == 2)
-                // break;
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-
-        // // split file, for test
-        // ArrayList<Socket> freeMappers = new ArrayList<Socket>();
-        // for (Socket sock : slavePool.values()) {
-        // freeMappers.add(sock);
-        // }
-        // try {
-        // FileSplit.fileDispatch(freeMappers, Constants.FS_LOCATION
-        // + "story1.txt", 2, 2);
-        // System.out.println(FileSplit.splitLayout);
-        // } catch (Exception e) {
-        // e.printStackTrace();
-        // }
-        // while(true){}
     }
 
     /**
@@ -145,8 +129,6 @@ public class MasterMain {
      */
     public static void handleLeave(ArrayList<SocketAddress> removeList) {
 
-        // TODO reschedule its works
-        System.out.println("SlavePool is" + slavePool.toString());
         ArrayList<SlaveInfo> slaveList = new ArrayList<SlaveInfo>(
                 MasterMain.slavePool.values());
         System.out.println("removeList is" + removeList);
@@ -174,7 +156,6 @@ public class MasterMain {
         for (int k = 0; k < removeList.size(); k++) {
             SocketAddress sockAddr = removeList.get(k);
             // relocate its files
-            System.out.println(k + " " + removeList.size());
             handleFile(sockAddr);
 
             // move its reduce jobs to other hosts
@@ -230,6 +211,10 @@ public class MasterMain {
 
     }
 
+    /**
+     * send failed node file to others
+     * @param sockAddr
+     */
     private static void handleFile(SocketAddress sockAddr) {
         // search all the files it have
         ArrayList<SlaveInfo> slave = new ArrayList<SlaveInfo>(

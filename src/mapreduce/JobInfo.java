@@ -47,4 +47,10 @@ public class JobInfo {
     public void setJob(Job job) {
         this.job = job;
     }
+
+    @Override
+    public String toString() {
+        return "[remainWorks=" + remainWorks + ", sock=" + sock
+                + ", outSplitName=" + outSplitName + ", job=" + job + "]";
+    }
 }

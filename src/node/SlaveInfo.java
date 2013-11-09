@@ -55,7 +55,6 @@ public class SlaveInfo {
             this.sockAddr = tmpSock.getRemoteSocketAddress();
             tmpSock.close();
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             System.out.println("Slave listen port unavailable");
             e.printStackTrace();
         }
@@ -157,10 +156,11 @@ public class SlaveInfo {
         }
 
     }
-    
+
+    @Override
     public String toString() {
-        return this.mapperTasks.toString() + " \n"
-                + this.reducerTasks.toString() + " \n" + this.sockAddr + " "
-                + this.port + " " + this.splits;
+        return "[socket=" + socket + ", mapperTasks=" + mapperTasks
+                + ", reducerTasks=" + reducerTasks + ", port=" + port
+                + ", sockAddr=" + sockAddr + ", splits=" + splits + "]";
     }
 }

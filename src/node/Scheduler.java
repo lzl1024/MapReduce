@@ -112,6 +112,7 @@ public class Scheduler extends Thread {
                         new Message(Message.MSG_TYPE.WORK_COMPELETE, jobInfo
                                 .getJob().getJobID()).send(jobInfo.getSock(),
                                 null, -1);
+                        jobPool.remove(jobInfo.getJob().getJobID());
                     }
                     new Message(MSG_TYPE.REDUCER_COMPLETE, null).send(sock,
                             null, -1);
@@ -124,20 +125,7 @@ public class Scheduler extends Thread {
 
                     MasterMain.slavePool.get(receiveMsg.getSockAddr())
                             .getMapperTasks().remove(receiveMsg.getSplitName());
-                    // System.out.println("Mapper FS Layout: "
-                    // + FileSplit.splitLayout);
-                    //
-                    // FileSplit.splitLayout.get(receiveMsg.getSplitName())
-                    // .remove(receiveMsg.getSockAddr());
-                    // if (FileSplit.splitLayout.get(receiveMsg.getSplitName())
-                    // .size() == 0) {
-                    // FileSplit.splitLayout.remove(receiveMsg.getSplitName());
-                    // } // add the splits number in slave
-                    // MasterMain.slavePool.get(receiveMsg.getSockAddr())
-                    // .setSplits(
-                    // MasterMain.slavePool.get(
-                    // receiveMsg.getSockAddr())
-                    // .getSplits() - 1);
+
                     System.out.println("After Mapper FS Layout: "
                             + FileSplit.splitLayout);
 

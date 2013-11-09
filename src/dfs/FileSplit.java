@@ -156,7 +156,6 @@ public class FileSplit {
 
             // dispatch replicas
             for (int i = 0; i < Constants.ReplFac; i++) {
-                System.out.println(i + " "+ fileSplit + " " + mapperPointer);
                 try {
                     downloadREQ.send(freeMappers.get(mapperPointer), null, -1);
                     if (Message.receive(freeMappers.get(mapperPointer), null,
