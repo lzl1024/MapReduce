@@ -2,6 +2,9 @@ package node;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.net.Socket;
+import java.net.SocketAddress;
+import java.util.ArrayList;
 
 import dfs.FileSplit;
 
@@ -35,15 +38,26 @@ public class MasterManager extends Thread {
                     }
                 } else if (cmd.length == 2 && cmd[0].equals("kjob")) {
                     int jobID = Integer.parseInt(cmd[1]);
-                    
+
                     if (!Scheduler.jobPool.containsKey(jobID)) {
                         System.out.println("No such job is running!");
                         continue;
                     }
-                    
+
                     synchronized (Scheduler.killedJob) {
                         Scheduler.killedJob.add(jobID);
                     }
+                } else if (cmd.length == 3 && cmd[0].equals("kslave")) {
+                    int port = Integer.parseInt(cmd[2]);
+                    ArrayList<SocketAddress> leaveAdd = new ArrayList<SocketAddress>();
+                    try {
+                        Socket sock = new Socket(cmd[1], port);
+                        leaveAdd.add(sock.getRemoteSocketAddress());
+                        sock.close();
+                    } catch (Exception e) {
+                        System.out.println("Cannot find the slave");
+                    }
+                    MasterMain.handleLeave(leaveAdd);
                 }
             } catch (Exception e) {
                 System.out.println("Invalid Input!");
@@ -58,5 +72,7 @@ public class MasterManager extends Thread {
         System.out.println("'jobs' : show jobs infomation");
         System.out.println("'slaves' : show slaves infomation");
         System.out.println("'kjob <jobID>' : kill one job");
+        System.out
+                .println("'kslave <slaveIp> <slaveListenPort>' : kill one slave");
     }
 }

@@ -109,8 +109,6 @@ public class MasterMain {
      */
     public static void handleLeave(ArrayList<SocketAddress> removeList) {
 
-        ArrayList<SlaveInfo> slaveList = new ArrayList<SlaveInfo>(
-                MasterMain.slavePool.values());
         System.out.println("removeList is" + removeList);
 
         ArrayList<SlaveInfo> removed = new ArrayList<SlaveInfo>();
@@ -127,6 +125,9 @@ public class MasterMain {
 
             }
         }
+        
+        ArrayList<SlaveInfo> slaveList = new ArrayList<SlaveInfo>(
+                MasterMain.slavePool.values());
 
         if (slavePool.size() == 0) {
             System.out.println("Leave all!");
