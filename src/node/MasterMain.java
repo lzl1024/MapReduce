@@ -47,7 +47,7 @@ public class MasterMain {
 
         // keep alive process start
         new MasterKeepAlive().start();
-        
+
         new MasterManager().start();
 
         // start main routine
@@ -125,7 +125,7 @@ public class MasterMain {
 
             }
         }
-        
+
         ArrayList<SlaveInfo> slaveList = new ArrayList<SlaveInfo>(
                 MasterMain.slavePool.values());
 
@@ -139,54 +139,56 @@ public class MasterMain {
             // relocate its files
             handleFile(sockAddr);
 
-            // move its reduce jobs to other hosts
-            for (Integer reduceTask : removed.get(k).getReducerTasks()) {
-                Collections.sort(slaveList, new SlaveInfo.ReducerPrio());
-                int i;
-                for (i = 0; i < slaveList.size(); i++) {
-                    if (slaveList.get(i).getReducerTasks().size() < Constants.IdealReducerNum) {
-                        Scheduler.inviteReducer(slaveList.get(i).getSocket(),
-                                new Job(reduceTask), i + 1);
-                        for (SlaveInfo info : slaveList) {
-                            Socket sock = info.getSocket();
-                            ChangeReduceMsg msg = new ChangeReduceMsg(sockAddr,
-                                    slaveList.get(i).getSocketAddr());
-                            try {
-                                new Message(MSG_TYPE.CHANGE_REDUCELIST, msg)
-                                        .send(sock, null, -1);
-                            } catch (Exception e) {
-                                // TODO Auto-generated catch block
-                                e.printStackTrace();
-                            }
-                        }
-                        break;
-                    }
-                }
-                if (i == slaveList.size()) {
-                    System.out.println("No more reducer available.");
-                }
-            }
             // move its map jobs to other hosts
             for (String fileSplit : removed.get(k).getMapperTasks()) {
-                boolean flag = false;
                 ArrayList<SocketAddress> sockAddrList = FileSplit.splitLayout
                         .get(fileSplit);
-                // TODO
-                for (SocketAddress e : sockAddrList) {
+
+                if (sockAddrList.size() > 0) {
+                    Collections.sort(slaveList, new SlaveInfo.MapperPrio());
                     Scheduler
-                            .inviteMapper(e,
-                                    new Job(Scheduler.MapperJob.get(fileSplit)
+                            .inviteMapper(slaveList.get(0).getSocket()
+                                    .getRemoteSocketAddress(), new Job(
+                                    Scheduler.MapperJob.get(fileSplit)
                                             .getMapperClass()),
                                     Scheduler.MapperJob.get(fileSplit)
                                             .getReudcerList(), fileSplit);
-                    flag = true;
-                    break;
 
+                } else {
+                    System.out.println(fileSplit
+                            + " cannot find a mapper to handle, job fails");
                 }
-                if (!flag) {
-                    // TODO: what if no host has this piece of file(no mapper
-                    // candidate)
+            }
+
+            // failed node list
+            ArrayList<SocketAddress> failList = new ArrayList<SocketAddress>();
+
+            // move its reduce jobs to other hosts
+            for (Integer reduceTask : removed.get(k).getReducerTasks()) {
+                // change with balanced load
+                Collections.sort(slaveList, new SlaveInfo.ReducerPrio());
+                int i = 0;
+                // TODO:
+                Scheduler.inviteReducer(slaveList.get(0).getSocket(), new Job(
+                        reduceTask), i + 1);
+                for (SlaveInfo info : slaveList) {
+                    Socket sock = info.getSocket();
+                    ChangeReduceMsg msg = new ChangeReduceMsg(sockAddr,
+                            slaveList.get(i).getSocketAddr());
+                    try {
+                        new Message(MSG_TYPE.CHANGE_REDUCELIST, msg).send(sock,
+                                null, -1);
+                        break;
+                    } catch (Exception e) {
+                        failList.add(sock.getRemoteSocketAddress());
+                    }
                 }
+
+            }
+
+            // failed again, handle leave
+            if (failList.size() > 0) {
+                handleLeave(failList);
             }
         }
 
@@ -194,6 +196,7 @@ public class MasterMain {
 
     /**
      * send failed node file to others
+     * 
      * @param sockAddr
      */
     private static void handleFile(SocketAddress sockAddr) {
