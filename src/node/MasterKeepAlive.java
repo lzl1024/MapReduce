@@ -34,15 +34,6 @@ public class MasterKeepAlive extends Thread {
             if (failList.size() > 0) {
                 MasterMain.handleLeave(failList);
             }
-            // remove failed nodes, other threads can not revise
-            // slavePool at this time
-//            synchronized (MasterMain.slavePool) {
-//                for (SocketAddress sockAdd : failList) {
-//                    MasterMain.listenToActive.remove(MasterMain.slavePool.get(
-//                            sockAdd).getSocketAddr());
-//                    MasterMain.slavePool.remove(sockAdd);
-//                }
-//            }
 
             try {
                 sleep(Constants.KEEP_ALIVE_INT);

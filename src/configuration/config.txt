@@ -1,6 +1,5 @@
 //Socket Configuration
 MainRoutingPort=10160
-FiledispatchPort=10161
 SlaveActivePort=10162
 MasterIp=localhost
 

@@ -118,6 +118,7 @@ public class ReducerPerform extends Thread {
             System.exit(-1);
         }
 
+        // send success message back to master
         try {
             Socket tmpSock = new Socket(Constants.MasterIp,
                     Constants.SlaveActivePort);
@@ -127,10 +128,9 @@ public class ReducerPerform extends Thread {
                     this.jobID)).send(tmpSock, null, -1);
             Message.receive(tmpSock, null, -1);
             tmpSock.close();
-
         } catch (Exception e) {
-
-            e.printStackTrace();
+            System.out.println("Failed to connect with Master");
+            System.exit(-1);
         }
 
         // delete all split files

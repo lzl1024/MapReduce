@@ -1,0 +1,13 @@
+1.MapperPerform : send split failed, add to failed Cache
+when slave receive reducer change message, send the file in failed cache to it and see if mapper complete, send MSG_TYPE.FILE_DOWNLOAD again 
+
+2.management tool refine
+
+3. debug handle leave
+leave when: dfs get, delete, put, 
+			master split files
+			master send split files to mapper
+			keep alive : mapper doing its job
+			mapper send result to reducer
+			reducer fail : reducer send answer to user
+			

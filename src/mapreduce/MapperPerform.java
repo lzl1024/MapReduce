@@ -6,7 +6,6 @@ import io.Text;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.net.Socket;
 import java.net.SocketAddress;
@@ -62,18 +61,18 @@ public class MapperPerform extends Thread {
             fd.close();
 
             // send each splits to reducers
-            if (sendSplits()) {
-                // send complete to master
-                Socket sock = new Socket(Constants.MasterIp,
-                        Constants.SlaveActivePort);
+            sendSplits();
 
-                CompleteMsg mapperComMsg = new CompleteMsg(splitName,
-                        SlaveCompute.sockToMaster.getLocalSocketAddress(), null);
-                new Message(MSG_TYPE.MAPPER_COMPLETE, mapperComMsg).send(sock,
-                        null, -1);
-                Message.receive(sock, null, -1);
-                sock.close();
-            }
+            // send complete to master
+            Socket sock = new Socket(Constants.MasterIp,
+                    Constants.SlaveActivePort);
+
+            CompleteMsg mapperComMsg = new CompleteMsg(splitName,
+                    SlaveCompute.sockToMaster.getLocalSocketAddress(), null);
+            new Message(MSG_TYPE.MAPPER_COMPLETE, mapperComMsg).send(sock,
+                    null, -1);
+            Message.receive(sock, null, -1);
+            sock.close();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -81,7 +80,7 @@ public class MapperPerform extends Thread {
         }
     }
 
-    private boolean sendSplits() throws Exception {
+    private boolean sendSplits() {
         ArrayList<SocketAddress> failNode = new ArrayList<SocketAddress>();
         for (int i = 0; i < reducerList.size(); i++) {
             Socket socket = new Socket();
@@ -89,18 +88,15 @@ public class MapperPerform extends Thread {
             String fileName = splitName + "_" + (i + 1);
             try {
                 socket.connect(add);
-                System.out.println("FILE_DOWNLOAD filename" + fileName);
-                System.out.println("sock" + socket.getRemoteSocketAddress());
                 new Message(MSG_TYPE.FILE_DOWNLOAD, fileName).send(socket,
                         null, -1);
 
                 // send file
                 FileTransmitServer.sendFile(fileName, socket);
-                if(!socket.isClosed()) {
+                if (!socket.isClosed()) {
                     socket.close();
                 }
-
-            } catch (IOException e) {
+            } catch (Exception e) {
                 // reducer fail
                 System.out.println("Reducer failed");
                 if (SlaveCompute.failedCache.containsKey(add)) {
@@ -116,12 +112,20 @@ public class MapperPerform extends Thread {
 
         if (failNode.size() > 0) {
             // send to master
-            Socket masterSocket = new Socket(Constants.MasterIp,
-                    Constants.SlaveActivePort);
-            new Message(MSG_TYPE.NODE_FAIL, failNode).send(masterSocket, null,
-                    -1);
-            Message.receive(masterSocket, null, -1);
-            masterSocket.close();
+            Socket masterSocket;
+            try {
+                masterSocket = new Socket(Constants.MasterIp,
+                        Constants.SlaveActivePort);
+                new Message(MSG_TYPE.NODE_FAIL, failNode).send(masterSocket,
+                        null, -1);
+                Message.receive(masterSocket, null, -1);
+                masterSocket.close();
+            } catch (Exception e) {
+                System.out.println("Failed to connect with the Master");
+                e.printStackTrace();
+                System.exit(-1);
+            }
+
             return false;
         }
         return true;

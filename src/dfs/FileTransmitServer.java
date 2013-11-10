@@ -26,41 +26,38 @@ public class FileTransmitServer {
      * @param socket
      * @throws IOException
      */
-    public static void sendFile(String fileName, Socket socket) {
+    public static void sendFile(String fileName, Socket socket)
+            throws IOException {
         System.out.println("send File: " + fileName + ", sock: "
                 + socket.getRemoteSocketAddress());
 
         DataInputStream file = null;
         DataOutputStream sockdata = null;
         try {
-            try {
-                file = new DataInputStream(new BufferedInputStream(
-                        new FileInputStream(fileName)));
-                sockdata = new DataOutputStream(
-                        socket.getOutputStream());
-                byte[] buf = new byte[Constants.BufferSize];
-                int read_num;
-                while ((read_num = file.read(buf)) != -1) {
-                    sockdata.write(buf, 0, read_num);
-                }
-            } catch (FileNotFoundException e) {
-                System.out.println("The file does not exist");
-                byte[] buf = new byte[Constants.BufferSize];
-                sockdata.write(buf, 0, 0);
+            file = new DataInputStream(new BufferedInputStream(
+                    new FileInputStream(fileName)));
+            sockdata = new DataOutputStream(socket.getOutputStream());
+            byte[] buf = new byte[Constants.BufferSize];
+            int read_num;
+            while ((read_num = file.read(buf)) != -1) {
+                sockdata.write(buf, 0, read_num);
             }
-    
-            sockdata.flush();
-            file.close();
-        } catch (Exception e) {
-            System.out.println("Cannot communicate with other side");
+        } catch (FileNotFoundException e) {
+            System.out.println("The file does not exist");
+            byte[] buf = new byte[Constants.BufferSize];
+            sockdata.write(buf, 0, 0);
         }
+
+        sockdata.flush();
+        file.close();
+
     }
 
     /**
      * Receive a file split from the remote
      * 
      * @param content
-     * @throws Exception 
+     * @throws Exception
      */
     public static void receiveFile(String fileName, Socket sock)
             throws Exception {
@@ -80,9 +77,9 @@ public class FileTransmitServer {
             }
         }
         file.close();
-        
+
         if (!total) {
-            System.out.println ("The file has been deleted on the other side");
+            System.out.println("The file has been deleted on the other side");
             throw new Exception();
         } else {
             System.out.println("receive File: " + fileName + ", sock: "
@@ -110,8 +107,8 @@ public class FileTransmitServer {
                     sock.close();
                 }
             } catch (Exception e) {
-                System.out.println("receive file unsuccessfully");
-                e.printStackTrace();
+                System.out.println("receive file unsuccessfully, with "
+                        + sock.getRemoteSocketAddress());
             }
         }
     }
@@ -134,7 +131,8 @@ public class FileTransmitServer {
                     sock.close();
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                System.out.println("Fail to send file with "
+                        + sock.getRemoteSocketAddress());
             }
 
         }

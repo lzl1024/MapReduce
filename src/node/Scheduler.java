@@ -42,69 +42,82 @@ public class Scheduler extends Thread {
         }
 
         while (true) {
+            Socket sock = null;
+            Message msg = null;
             try {
-                Socket sock = serverSock.accept();
+                sock = serverSock.accept();
                 sock.setSoTimeout(Constants.RegularTimout);
 
-                Message msg = Message.receive(sock, null, -1);
-                switch (msg.getType()) {
-                // listen if one slave quit, send back quit message, handle it
-                // and remove it from slavePool
-                case SLAVE_QUIT:
-                    ArrayList<SocketAddress> tmp = new ArrayList<SocketAddress>();
-                    tmp.add((SocketAddress) msg.getContent());
-                    MasterMain.handleLeave(tmp);
-                    msg.send(sock, null, -1);
-                    break;
-                // mapper will find its reducer fail, master handles the fail
-                // send back fail_ack
-                case NODE_FAIL:
-                    ArrayList<SocketAddress> content = new ArrayList<SocketAddress>();
+                msg = Message.receive(sock, null, -1);
+            } catch (Exception e1) {
+                System.out.println("Failed to receive message");
+                continue;
+            }
 
-                    for (SocketAddress add : (ArrayList<SocketAddress>) msg
-                            .getContent()) {
-                        content.add(MasterMain.listenToActive.get(add));
-                    }
-                    MasterMain.handleLeave(content);
-                    break;
-                // new Job comes
-                case NEW_JOB:
+            switch (msg.getType()) {
+            // listen if one slave quit, send back quit message, handle it
+            // and remove it from slavePool
+            case SLAVE_QUIT:
+                ArrayList<SocketAddress> tmp = new ArrayList<SocketAddress>();
+                tmp.add((SocketAddress) msg.getContent());
+                MasterMain.handleLeave(tmp);
+                try {
+                    msg.send(sock, null, -1);
+                } catch (Exception e1) {
+                }
+                break;
+            // mapper will find its reducer fail, master handles the fail
+            // send back fail_ack
+            case NODE_FAIL:
+                ArrayList<SocketAddress> content = new ArrayList<SocketAddress>();
+
+                for (SocketAddress add : (ArrayList<SocketAddress>) msg
+                        .getContent()) {
+                    content.add(MasterMain.listenToActive.get(add));
+                }
+                MasterMain.handleLeave(content);
+                break;
+            // new Job comes
+            case NEW_JOB:
+                try {
+                    handleJob((Job) msg.getContent(), sock);
+                } catch (Exception e) {
                     try {
-                        handleJob((Job) msg.getContent(), sock);
-                    } catch (Exception e) {
-                        e.printStackTrace();
                         new Message(Message.MSG_TYPE.WORK_FAIL, null).send(
                                 sock, null, -1);
+                    } catch (Exception e1) {
+                        System.out.println("Cannot connect to user: WORK FAIL");
                     }
-                    break;
-                // one reducer complete the work
-                case REDUCER_COMPLETE:
-                    System.out.println("receive a REDUCER_COMPLETE");
-                    CompleteMsg comMsg = (CompleteMsg) msg.getContent();
-                    ArrayList<SocketAddress> newList = new ArrayList<SocketAddress>();
-                    newList.add(comMsg.getSockAddr());
-                    FileSplit.splitLayout.put(comMsg.getSplitName(), newList);
-                    // add the splits number in slave
-                    MasterMain.slavePool.get(comMsg.getSockAddr()).setSplits(
-                            MasterMain.slavePool.get(comMsg.getSockAddr())
-                                    .getSplits() + 1);
+                }
+                break;
+            // one reducer complete the work
+            case REDUCER_COMPLETE:
+                System.out.println("receive a REDUCER_COMPLETE");
+                CompleteMsg comMsg = (CompleteMsg) msg.getContent();
+                ArrayList<SocketAddress> newList = new ArrayList<SocketAddress>();
+                newList.add(comMsg.getSockAddr());
+                FileSplit.splitLayout.put(comMsg.getSplitName(), newList);
+                // add the splits number in slave
+                MasterMain.slavePool.get(comMsg.getSockAddr()).setSplits(
+                        MasterMain.slavePool.get(comMsg.getSockAddr())
+                                .getSplits() + 1);
 
-                    JobInfo jobInfo = jobPool.get(comMsg.getJobID());
-                    int remain = jobInfo.getRemainWorks() - 1;
-                    jobInfo.setRemainWorks(remain);
-                    // update slave pool
-                    MasterMain.slavePool.get(comMsg.getSockAddr())
-                            .getReducerTasks()
-                            .remove(new Integer(jobInfo.getJob().getJobID()));
+                JobInfo jobInfo = jobPool.get(comMsg.getJobID());
+                int remain = jobInfo.getRemainWorks() - 1;
+                jobInfo.setRemainWorks(remain);
+                // update slave pool
+                MasterMain.slavePool.get(comMsg.getSockAddr())
+                        .getReducerTasks()
+                        .remove(new Integer(jobInfo.getJob().getJobID()));
 
-                    // complete the whole work
-                    if (remain == 0) {
-                        System.out.println(FileSplit.splitLayout);
+                // complete the whole work
+                if (remain == 0) {
+                    System.out.println(FileSplit.splitLayout);
 
-                        Integer jobID = jobInfo.getJob().getJobID();
-                        // delete the file in master and in itself
-                        deleteFile(Integer.toString(jobID));
-
+                    Integer jobID = jobInfo.getJob().getJobID();
+                    // delete the file in master and in itself
+                    deleteFile(Integer.toString(jobID));
+                    try {
                         if (killedJob.contains(jobID)) {
                             new Message(Message.MSG_TYPE.WORK_KILLED, jobID)
                                     .send(jobInfo.getSock(), null, -1);
@@ -112,77 +125,115 @@ public class Scheduler extends Thread {
                                 killedJob.remove(jobID);
                             }
                         } else {
-                            new Message(Message.MSG_TYPE.WORK_COMPELETE, jobID)
+                            new Message(Message.MSG_TYPE.WORK_COMPLETE, jobID)
                                     .send(jobInfo.getSock(), null, -1);
                         }
-                        jobPool.remove(jobID);
+                    } catch (Exception e) {
+                        System.out.println("Cannot connect to user: WORK DONE");
                     }
+                    jobPool.remove(jobID);
+                }
+
+                try {
                     new Message(MSG_TYPE.REDUCER_COMPLETE, null).send(sock,
                             null, -1);
-                    break;
-                // one mapper complete the work
-                case MAPPER_COMPLETE:
-                    System.out.println("receive a MAPPER_COMPLETE");
-                    // update file layout and slavePool
-                    CompleteMsg receiveMsg = (CompleteMsg) msg.getContent();
+                } catch (Exception e) {
+                    System.out.println("Reducer complete msg failed");
+                }
+                break;
+            // one mapper complete the work
+            case MAPPER_COMPLETE:
+                System.out.println("receive a MAPPER_COMPLETE");
+                // update file layout and slavePool
+                CompleteMsg receiveMsg = (CompleteMsg) msg.getContent();
 
-                    MasterMain.slavePool.get(receiveMsg.getSockAddr())
-                            .getMapperTasks().remove(receiveMsg.getSplitName());
+                MasterMain.slavePool.get(receiveMsg.getSockAddr())
+                        .getMapperTasks().remove(receiveMsg.getSplitName());
 
-                    System.out.println("After Mapper FS Layout: "
-                            + FileSplit.splitLayout);
+                System.out.println("After Mapper FS Layout: "
+                        + FileSplit.splitLayout);
 
+                try {
                     new Message(MSG_TYPE.MAPPER_COMPLETE, null).send(sock,
                             null, -1);
-                    break;
+                } catch (Exception e) {
+                    System.out
+                            .println("Send back message fail: MAPPER_COMPLETE");
+                }
+                break;
 
-                case FILE_REQ:
-                    // reply the get file request and choose tell user which
-                    // node to find
-                    ArrayList<CompleteMsg> result = findFiles((String) msg
-                            .getContent());
+            case FILE_REQ:
+                // reply the get file request and choose tell user which
+                // node to find
+                ArrayList<CompleteMsg> result = findFiles((String) msg
+                        .getContent());
+                try {
                     new Message(MSG_TYPE.FILE_REQ, result).send(sock, null, -1);
-                    break;
-                case PUT_FILE:
-                    // user put request, upload file to the master
-                    // wait for split by map task
+                } catch (Exception e) {
+                    System.out.println("Fail to connect with user: FILE_REQ");
+                }
+                break;
+            case PUT_FILE:
+                // user put request, upload file to the master
+                // wait for split by map task
+                try {
                     FileTransmitServer.receiveFile((String) msg.getContent(),
                             sock);
-                    break;
-                case PUT_FILE_FS:
-                    // user put request, upload file to the master and split
-                    // the file by split load balance
+                } catch (Exception e) {
+                    System.out.println("Fail to connect with user: PUT_FILE");
+                }
+                break;
+            case PUT_FILE_FS:
+                // user put request, upload file to the master and split
+                // the file by split load balance
+                try {
                     FileTransmitServer.receiveFile(Constants.FS_LOCATION
                             + (String) msg.getContent(), sock);
+                } catch (Exception e) {
+                    System.out
+                            .println("Fail to connect with user: PUT_FILE_FS");
+                }
 
-                    // sort slave according to file load and dispatch
-                    ArrayList<SlaveInfo> slaveList = new ArrayList<SlaveInfo>(
-                            MasterMain.slavePool.values());
-                    Collections.sort(slaveList, new SlaveInfo.FilePrio());
-                    ArrayList<SocketAddress> targets = new ArrayList<SocketAddress>();
-                    for (SlaveInfo slave : slaveList) {
-                        targets.add(slave.getSocketAddr());
-                    }
+                // sort slave according to file load and dispatch
+                ArrayList<SlaveInfo> slaveList = new ArrayList<SlaveInfo>(
+                        MasterMain.slavePool.values());
+                Collections.sort(slaveList, new SlaveInfo.FilePrio());
+                ArrayList<SocketAddress> targets = new ArrayList<SocketAddress>();
+                for (SlaveInfo slave : slaveList) {
+                    targets.add(slave.getSocketAddr());
+                }
 
+                try {
                     FileSplit.fileDispatch(targets, (String) msg.getContent(),
                             -1, null, null);
-                    break;
-                case DELETE_FILE:
+                } catch (Exception e) {
+                    System.out.println("Failed to dispatch file");
+                }
+                break;
+            case DELETE_FILE:
+                try {
                     new Message(MSG_TYPE.DELETE_FILE, null)
                             .send(sock, null, -1);
-                    deleteFile((String) msg.getContent());
-                    break;
-                case RANDOM_RECORD:
+                } catch (Exception e) {
+                    System.out
+                            .println("Fail to connect with user: DELETE_FILE");
+                }
+                deleteFile((String) msg.getContent());
+                break;
+            case RANDOM_RECORD:
+                try {
                     new Message(MSG_TYPE.RANDOM_RECORD,
                             findRecord((RecordWrapperMsg) msg.getContent()))
                             .send(sock, null, -1);
-                    break;
-                default:
-                    throw new IOException();
+                } catch (Exception e) {
+                    System.out
+                            .println("Fail to connect with user: RANDOM_RECORD");
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
+                break;
+            default:
+                System.out.println("Undefined Message :" + msg.getType());
             }
+
         }
     }
 
@@ -210,8 +261,9 @@ public class Scheduler extends Thread {
             String fileName = Constants.FS_LOCATION
                     + recordWrapper.getFileName() + "_" + (i + 1);
             last = recordWrapper.getRecordNum() - last;
+            Socket sock = null;
             try {
-                Socket sock = MasterMain.slavePool.get(
+                 sock = MasterMain.slavePool.get(
                         FileSplit.splitLayout.get(fileName).get(0)).getSocket();
 
                 RecordWrapperMsg msgContent = new RecordWrapperMsg(last,
@@ -222,6 +274,9 @@ public class Scheduler extends Thread {
                 return (String) Message.receive(sock, null, -1).getContent();
             } catch (Exception e) {
                 System.out.println("Get record from " + fileName + " error");
+                ArrayList<SocketAddress> tmp = new ArrayList<SocketAddress>();
+                tmp.add(sock.getRemoteSocketAddress());
+                MasterMain.handleLeave(tmp);
             }
         }
 

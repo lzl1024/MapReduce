@@ -10,8 +10,6 @@ public class Constants {
     /**
      * Uninitialized parameters
      */
-    // the port for dfs to dispatch files
-    public static int FiledispatchPort;
     // the port that slave actively send msg to master
     public static int SlaveActivePort;
     // the port the master running on
@@ -83,7 +81,6 @@ public class Constants {
     private void putArgs(HashMap<String, String> args) {
 
         try {
-            FiledispatchPort = Integer.parseInt(args.get("FiledispatchPort"));
             MainRoutingPort = Integer.parseInt(args.get("MainRoutingPort"));
             FileDownloadTimeout = Integer.parseInt(args
                     .get("FileDownloadTimeout"));

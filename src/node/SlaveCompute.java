@@ -16,6 +16,7 @@ import socket.Message;
 import socket.Message.MSG_TYPE;
 import socket.RecordWrapperMsg;
 import socket.ReducerAckMsg;
+import util.Constants;
 import dfs.DeleteFileThread;
 import dfs.FileTransmitServer;
 
@@ -101,17 +102,34 @@ public class SlaveCompute extends Thread {
                     // get file from another slave
                     CompleteMsg downloadMsg = (CompleteMsg) msgIn.getContent();
                     Socket downloadSocket = new Socket();
-                    downloadSocket.connect(downloadMsg.getSockAddr());
+                    try {
+                        downloadSocket.connect(downloadMsg.getSockAddr());
+                        new Message(MSG_TYPE.GET_FILE,
+                                downloadMsg.getSplitName()).send(
+                                downloadSocket, null, -1);
+                    } catch (Exception e) {
+                        try {
+                            // send node fail message to inform master
+                            Socket failSock = new Socket(Constants.MasterIp,
+                                    Constants.SlaveActivePort);
+                            ArrayList<SocketAddress> tmp = new ArrayList<SocketAddress>();
+                            tmp.add(downloadSocket.getRemoteSocketAddress());
 
-                    new Message(MSG_TYPE.GET_FILE, downloadMsg.getSplitName())
-                            .send(downloadSocket, null, -1);
+                            new Message(MSG_TYPE.NODE_FAIL, tmp).send(failSock,
+                                    null, -1);
+                        } catch (Exception e1) {
+                            System.out
+                                    .println("Failed to connect with the Master");
+                            System.exit(-1);
+                        }
+                    }
+
                     new FileTransmitServer.SlaveDownload(downloadSocket,
                             downloadMsg.getSplitName()).start();
                     break;
                 default:
                     break;
                 }
-
             } catch (Exception e) {
                 System.out.println("Connection to master broke");
                 System.exit(0);

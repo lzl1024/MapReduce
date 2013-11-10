@@ -154,7 +154,7 @@ public class Job implements Serializable {
 
         Message msgIn = Message.receive(sock, null, -1);
         sock.close(); 
-        if (msgIn.getType() == MSG_TYPE.WORK_COMPELETE) {
+        if (msgIn.getType() == MSG_TYPE.WORK_COMPLETE) {
             Integer jobID = (Integer) msgIn.getContent();
             // user get file from dfs and delete file from dfs
             // if output file is set get the merged file

@@ -69,7 +69,6 @@ public class DFSApi {
             if (getSplits) {
                 // request files
                 for (CompleteMsg msg : compleMsg) {
-    
                     SocketAddress sockAddr = msg.getSockAddr();
                     String realFileName = msg.getSplitName();
                     System.out.println("sockAddr" + sockAddr + " filename is"
