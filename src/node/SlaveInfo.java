@@ -11,11 +11,19 @@ import util.Constants;
 
 public class SlaveInfo {
 
+	public static class reduceTaskUnit {
+		int jobID;
+		int index;
+		public reduceTaskUnit(int jobID, int index) {
+			this.index = index;
+			this.jobID = jobID;
+		}
+	}
     private Socket socket;
     // the layout of mapper tasks, value is split name
     private CopyOnWriteArrayList<String> mapperTasks;
     // the layout of reducer tasks, value is jobID
-    private CopyOnWriteArrayList<Integer> reducerTasks;
+    private CopyOnWriteArrayList<reduceTaskUnit> reducerTasks;
     // the private port for this slave
     private int port;
     // the private socketAddress for communication between slaves
@@ -25,20 +33,20 @@ public class SlaveInfo {
 
     public SlaveInfo() {
         mapperTasks = new CopyOnWriteArrayList<String>();
-        reducerTasks = new CopyOnWriteArrayList<Integer>();
+        reducerTasks = new CopyOnWriteArrayList<reduceTaskUnit>();
         splits = 0;
     }
 
     public SlaveInfo(Socket sock) {
         mapperTasks = new CopyOnWriteArrayList<String>();
-        reducerTasks = new CopyOnWriteArrayList<Integer>();
+        reducerTasks = new CopyOnWriteArrayList<reduceTaskUnit>();
         socket = sock;
         splits = 0;
     }
 
     public SlaveInfo(Socket sock, int port) {
         mapperTasks = new CopyOnWriteArrayList<String>();
-        reducerTasks = new CopyOnWriteArrayList<Integer>();
+        reducerTasks = new CopyOnWriteArrayList<reduceTaskUnit>();
         socket = sock;
         this.port = port;
         Socket tmpSock;
@@ -102,11 +110,11 @@ public class SlaveInfo {
         this.mapperTasks = mapperTasks;
     }
 
-    public CopyOnWriteArrayList<Integer> getReducerTasks() {
+    public CopyOnWriteArrayList<reduceTaskUnit> getReducerTasks() {
         return reducerTasks;
     }
 
-    public void setReducerTasks(CopyOnWriteArrayList<Integer> reducerTasks) {
+    public void setReducerTasks(CopyOnWriteArrayList<reduceTaskUnit> reducerTasks) {
         this.reducerTasks = reducerTasks;
     }
 

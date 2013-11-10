@@ -9,6 +9,8 @@ import java.util.Collections;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import node.SlaveInfo.reduceTaskUnit;
+
 import mapreduce.Job;
 import socket.ChangeReduceMsg;
 import socket.CompleteMsg;
@@ -164,17 +166,16 @@ public class MasterMain {
             ArrayList<SocketAddress> failList = new ArrayList<SocketAddress>();
 
             // move its reduce jobs to other hosts
-            for (Integer reduceTask : removed.get(k).getReducerTasks()) {
+            for (reduceTaskUnit reduceTask : removed.get(k).getReducerTasks()) {
                 // change with balanced load
                 Collections.sort(slaveList, new SlaveInfo.ReducerPrio());
-                int i = 0;
-                // TODO:
+
                 Scheduler.inviteReducer(slaveList.get(0).getSocket(), new Job(
-                        reduceTask), i + 1);
+                        reduceTask.jobID), reduceTask.index);
                 for (SlaveInfo info : slaveList) {
                     Socket sock = info.getSocket();
                     ChangeReduceMsg msg = new ChangeReduceMsg(sockAddr,
-                            slaveList.get(i).getSocketAddr());
+                            slaveList.get(0).getSocketAddr());
                     try {
                         new Message(MSG_TYPE.CHANGE_REDUCELIST, msg).send(sock,
                                 null, -1);
