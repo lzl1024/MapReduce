@@ -49,6 +49,9 @@ public class Scheduler extends Thread {
                 sock.setSoTimeout(Constants.RegularTimout);
 
                 msg = Message.receive(sock, null, -1);
+                
+                //debug
+                System.out.println(msg.getType());
             } catch (Exception e1) {
                 System.out.println("Failed to receive message");
                 continue;
