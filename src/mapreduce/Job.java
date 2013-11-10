@@ -6,6 +6,7 @@ import java.net.Socket;
 
 import node.Scheduler;
 import socket.Message;
+import socket.Message.MSG_TYPE;
 import util.Constants;
 import dfs.DFSApi;
 import dfs.FileTransmitServer;
@@ -152,17 +153,19 @@ public class Job implements Serializable {
         new Message(Message.MSG_TYPE.NEW_JOB, this).send(sock, null, -1);
 
         Message msgIn = Message.receive(sock, null, -1);
-        if (msgIn.getType() != Message.MSG_TYPE.WORK_COMPELETE) {
-            sock.close();
-            throw new Exception("Job failed");
-        } else {
+        sock.close(); 
+        if (msgIn.getType() == MSG_TYPE.WORK_COMPELETE) {
             Integer jobID = (Integer) msgIn.getContent();
             // user get file from dfs and delete file from dfs
             // if output file is set get the merged file
             DFSApi.get(jobID + "##", this.outputFile, this.outputFile == null);
-            DFSApi.delete(jobID + "##");
+            DFSApi.delete(jobID + "##");        
+        } else if (msgIn.getType() == MSG_TYPE.WORK_KILLED){
+            throw new Exception("Job was killed by master");
+        } else {
+            throw new Exception("Job failed");
         }
-        sock.close();
+        
     }
 
     public boolean generateJobID() {

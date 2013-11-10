@@ -29,6 +29,8 @@ public class Scheduler extends Thread {
     public static HashMap<Integer, JobInfo> jobPool = new HashMap<Integer, JobInfo>();
     public static HashMap<String, MapperAckMsg> MapperJob = new HashMap<String, MapperAckMsg>();
 
+    public static HashSet<Integer> killedJob = new HashSet<Integer>();
+
     @SuppressWarnings({ "resource", "unchecked" })
     public void run() {
         ServerSocket serverSock = null;
@@ -99,14 +101,21 @@ public class Scheduler extends Thread {
                     if (remain == 0) {
                         System.out.println(FileSplit.splitLayout);
 
+                        Integer jobID = jobInfo.getJob().getJobID();
                         // delete the file in master and in itself
-                        deleteFile(Integer
-                                .toString(jobInfo.getJob().getJobID()));
+                        deleteFile(Integer.toString(jobID));
 
-                        new Message(Message.MSG_TYPE.WORK_COMPELETE, jobInfo
-                                .getJob().getJobID()).send(jobInfo.getSock(),
-                                null, -1);
-                        jobPool.remove(jobInfo.getJob().getJobID());
+                        if (killedJob.contains(jobID)) {
+                            new Message(Message.MSG_TYPE.WORK_KILLED, jobID)
+                                    .send(jobInfo.getSock(), null, -1);
+                            synchronized (killedJob) {
+                                killedJob.remove(jobID);
+                            }
+                        } else {
+                            new Message(Message.MSG_TYPE.WORK_COMPELETE, jobID)
+                                    .send(jobInfo.getSock(), null, -1);
+                        }
+                        jobPool.remove(jobID);
                     }
                     new Message(MSG_TYPE.REDUCER_COMPLETE, null).send(sock,
                             null, -1);

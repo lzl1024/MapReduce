@@ -26,6 +26,7 @@ import dfs.FileSplit;
 public class MasterMain {
     // pool to record the slave socket
     public static ConcurrentHashMap<SocketAddress, SlaveInfo> slavePool = new ConcurrentHashMap<SocketAddress, SlaveInfo>();
+    // key : slave to slave port, value : slave to master port
     public static ConcurrentHashMap<SocketAddress, SocketAddress> listenToActive = new ConcurrentHashMap<SocketAddress, SocketAddress>();
     public static int curPort;
 

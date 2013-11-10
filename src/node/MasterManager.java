@@ -35,10 +35,15 @@ public class MasterManager extends Thread {
                     }
                 } else if (cmd.length == 2 && cmd[0].equals("kjob")) {
                     int jobID = Integer.parseInt(cmd[1]);
-                    // TODO:
-                } else if (cmd.length == 3 && cmd[0].equals("kslave")) {
-                    int port = Integer.parseInt(cmd[2]);
-                    // TODO:
+                    
+                    if (!Scheduler.jobPool.containsKey(jobID)) {
+                        System.out.println("No such job is running!");
+                        continue;
+                    }
+                    
+                    synchronized (Scheduler.killedJob) {
+                        Scheduler.killedJob.add(jobID);
+                    }
                 }
             } catch (Exception e) {
                 System.out.println("Invalid Input!");
@@ -52,8 +57,6 @@ public class MasterManager extends Thread {
         System.out.println("'files' : show the layout of file distribution");
         System.out.println("'jobs' : show jobs infomation");
         System.out.println("'slaves' : show slaves infomation");
-        System.out
-                .println("'kslave <slaveIp> <slaveListenPort>' : kill one slave");
         System.out.println("'kjob <jobID>' : kill one job");
     }
 }

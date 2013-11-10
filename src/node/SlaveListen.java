@@ -49,7 +49,11 @@ public class SlaveListen extends Thread {
 
                     // update slave file map to start specific reducer
                     if (SlaveCompute.fileLeftMap.get(jobId) == 0) {
-                        SlaveCompute.waitingThreadMap.get(jobId).start();
+                        // start waiting threads
+                        for (Thread thread : SlaveCompute.waitingThreadMap
+                                .get(jobId)) {
+                            thread.start();
+                        }
                         SlaveCompute.waitingThreadMap.remove(jobId);
                         SlaveCompute.fileLeftMap.remove(jobId);
                     }
@@ -71,8 +75,8 @@ public class SlaveListen extends Thread {
                             (String) msgIn.getContent()).start();
                     break;
                 case FILE_SPLIT_REQ:
-                    FileTransmitServer.receiveFile((String) msgIn.getContent()
-                            , sock);
+                    FileTransmitServer.receiveFile((String) msgIn.getContent(),
+                            sock);
                     if (!sock.isClosed()) {
                         sock.close();
                     }

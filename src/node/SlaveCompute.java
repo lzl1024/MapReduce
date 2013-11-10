@@ -29,7 +29,7 @@ public class SlaveCompute extends Thread {
     // key: socketAddress, value: splitName
     public static HashMap<SocketAddress, ArrayList<String>> failedCache = new HashMap<SocketAddress, ArrayList<String>>();
     public static ArrayList<Thread> mapperThreadList = new ArrayList<Thread>();
-    public static HashMap<Integer, Thread> waitingThreadMap = new HashMap<Integer, Thread>();
+    public static HashMap<Integer, ArrayList<Thread>> waitingThreadMap = new HashMap<Integer, ArrayList<Thread>>();
     public static HashMap<Integer, Integer> fileLeftMap = new HashMap<Integer, Integer>();
 
     // constructor
@@ -64,8 +64,20 @@ public class SlaveCompute extends Thread {
                             .getContent();
                     int jobID = msgContent.getJobID();
                     Thread newReducer = new ReducerPerform(msgContent);
-                    waitingThreadMap.put(jobID, newReducer);
-                    fileLeftMap.put(jobID, msgContent.getfileNames().size());
+
+                    // add the reducer to map and wait mapper to complete
+                    if (waitingThreadMap.containsKey(jobID)) {
+                        waitingThreadMap.get(jobID).add(newReducer);
+                        fileLeftMap.put(jobID, fileLeftMap.get(jobID)
+                                + msgContent.getfileNames().size());
+                    } else {
+                        ArrayList<Thread> threadList = new ArrayList<Thread>();
+                        threadList.add(newReducer);
+                        waitingThreadMap.put(jobID, threadList);
+                        fileLeftMap
+                                .put(jobID, msgContent.getfileNames().size());
+                    }
+
                     System.out.println(fileLeftMap);
                     break;
                 case NOTIFY_PORT:
