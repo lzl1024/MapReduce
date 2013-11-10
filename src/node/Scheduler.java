@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
 
-import node.SlaveInfo.reduceTaskUnit;
+import node.SlaveInfo.ReduceTaskUnit;
 
 import mapreduce.Job;
 import mapreduce.JobInfo;
@@ -421,7 +421,7 @@ public class Scheduler extends Thread {
         try {
             // update slave info
             MasterMain.slavePool.get(socket.getRemoteSocketAddress())
-                    .getReducerTasks().add(new reduceTaskUnit(job.getJobID(), index));
+                    .getReducerTasks().add(new ReduceTaskUnit(job.getJobID(), index));
             new Message(MSG_TYPE.REDUCER_REQ, msg).send(socket, null, -1);
             Message.receive(socket, null, -1);
 

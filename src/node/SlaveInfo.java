@@ -11,10 +11,10 @@ import util.Constants;
 
 public class SlaveInfo {
 
-	public static class reduceTaskUnit {
+	public static class ReduceTaskUnit {
 		int jobID;
 		int index;
-		public reduceTaskUnit(int jobID, int index) {
+		public ReduceTaskUnit(int jobID, int index) {
 			this.index = index;
 			this.jobID = jobID;
 		}
@@ -23,7 +23,7 @@ public class SlaveInfo {
     // the layout of mapper tasks, value is split name
     private CopyOnWriteArrayList<String> mapperTasks;
     // the layout of reducer tasks, value is jobID
-    private CopyOnWriteArrayList<reduceTaskUnit> reducerTasks;
+    private CopyOnWriteArrayList<ReduceTaskUnit> reducerTasks;
     // the private port for this slave
     private int port;
     // the private socketAddress for communication between slaves
@@ -33,20 +33,20 @@ public class SlaveInfo {
 
     public SlaveInfo() {
         mapperTasks = new CopyOnWriteArrayList<String>();
-        reducerTasks = new CopyOnWriteArrayList<reduceTaskUnit>();
+        reducerTasks = new CopyOnWriteArrayList<ReduceTaskUnit>();
         splits = 0;
     }
 
     public SlaveInfo(Socket sock) {
         mapperTasks = new CopyOnWriteArrayList<String>();
-        reducerTasks = new CopyOnWriteArrayList<reduceTaskUnit>();
+        reducerTasks = new CopyOnWriteArrayList<ReduceTaskUnit>();
         socket = sock;
         splits = 0;
     }
 
     public SlaveInfo(Socket sock, int port) {
         mapperTasks = new CopyOnWriteArrayList<String>();
-        reducerTasks = new CopyOnWriteArrayList<reduceTaskUnit>();
+        reducerTasks = new CopyOnWriteArrayList<ReduceTaskUnit>();
         socket = sock;
         this.port = port;
         Socket tmpSock;
@@ -110,11 +110,11 @@ public class SlaveInfo {
         this.mapperTasks = mapperTasks;
     }
 
-    public CopyOnWriteArrayList<reduceTaskUnit> getReducerTasks() {
+    public CopyOnWriteArrayList<ReduceTaskUnit> getReducerTasks() {
         return reducerTasks;
     }
 
-    public void setReducerTasks(CopyOnWriteArrayList<reduceTaskUnit> reducerTasks) {
+    public void setReducerTasks(CopyOnWriteArrayList<ReduceTaskUnit> reducerTasks) {
         this.reducerTasks = reducerTasks;
     }
 
