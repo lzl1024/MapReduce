@@ -87,12 +87,13 @@ public class MapperPerform extends Thread {
             Socket socket = new Socket();
             SocketAddress add = reducerList.get(i);
             String fileName = splitName + "_" + (i + 1);
+            System.out.println("Mapper send split "+fileName);
             try {
                 socket.connect(add);
                 
                 new Message(MSG_TYPE.FILE_DOWNLOAD, new CompleteMsg(fileName, SlaveListen.sockComMsg, null)).send(socket,
                         null, -1);
-
+                System.out.println("Successs in 96");
                 // send file
                 FileTransmitServer.sendFile(fileName, socket);
                 if (!socket.isClosed()) {

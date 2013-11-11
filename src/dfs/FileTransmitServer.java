@@ -30,7 +30,7 @@ public class FileTransmitServer {
             throws IOException {
         System.out.println("send File: " + fileName + ", sock: "
                 + socket.getRemoteSocketAddress());
-System.out.println("local addr" + socket.getLocalPort());
+
         DataInputStream file = null;
         DataOutputStream sockdata = null;
         try {
