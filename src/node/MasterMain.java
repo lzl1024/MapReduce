@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
-import node.SlaveInfo.ReduceTaskUnit;
+import node.SlaveInfo.reduceTaskUnit;
 
 import mapreduce.Job;
 import socket.ChangeReduceMsg;
@@ -191,7 +191,7 @@ System.out.println("slavePool is" + MasterMain.slavePool);
             ArrayList<SocketAddress> failList = new ArrayList<SocketAddress>();
 
             // move its reduce jobs to other hosts
-            for (ReduceTaskUnit reduceTask : removed.get(k).getReducerTasks()) {
+            for (reduceTaskUnit reduceTask : removed.get(k).getReducerTasks()) {
                 // change with balanced load
                 Collections.sort(slaveList, new SlaveInfo.ReducerPrio());
 
