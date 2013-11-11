@@ -1,5 +1,6 @@
 package node;
 
+import java.io.File;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
@@ -26,6 +27,31 @@ public class SlaveChangeReduce extends Thread {
             SocketAddress newSocketAddr = msg.getNew();
             System.out.println("old sockADDR" + oldSocketAddr);
             System.out.println("new sockADDR" + newSocketAddr);
+            
+            if(MapperPerform.sentFileMap.containsKey(oldSocketAddr)) {
+            	ArrayList<String> tmpList = MapperPerform.sentFileMap.get(oldSocketAddr);
+            	ArrayList<String> newList = new ArrayList<String>();
+            	for(String str : tmpList) {
+            		File detectFile = new File(str);
+            		if(detectFile.exists()) {
+            			try {
+            				Socket sock = new Socket();
+            				sock.connect(newSocketAddr);
+            				new Message(MSG_TYPE.FILE_DOWNLOAD, new CompleteMsg(str, SlaveListen.sockComMsg, null)).send(sock, null, -1);
+            				FileTransmitServer.sendFile(str, sock);
+            				if(!sock.isClosed())
+            					sock.close();
+            				newList.add(str);
+            			} catch (Exception e) {
+            				// TODO Auto-generated catch block
+            				e.printStackTrace();
+            			}    
+            		}
+            	}
+            	MapperPerform.sentFileMap.put(newSocketAddr, newList);
+                MapperPerform.sentFileMap.remove(oldSocketAddr);
+            }
+            
             for (int i = 0; i < SlaveCompute.mapperThreadList.size(); i++) {
                 MapperPerform newMapper = (MapperPerform) SlaveCompute.mapperThreadList
                         .get(i);

@@ -10,6 +10,7 @@ import java.lang.reflect.Constructor;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 
 import node.SlaveCompute;
 import node.SlaveListen;
@@ -25,7 +26,8 @@ public class MapperPerform extends Thread {
     private ArrayList<SocketAddress> reducerList;
     private String mapperClass;
     private String splitName;
-
+    public static ConcurrentHashMap<SocketAddress, ArrayList<String>> sentFileMap = 
+    		new ConcurrentHashMap<SocketAddress, ArrayList<String>>();
     public MapperPerform(MapperAckMsg mapperAck) {
         System.out.println("MapperAckMsg is" + mapperAck.toString());
         this.reducerList = mapperAck.getReudcerList();
@@ -39,7 +41,10 @@ public class MapperPerform extends Thread {
         try {
             FileReader fd = new FileReader(this.splitName);
             reader = new BufferedReader(fd);
+            
 
+            
+            
             // reflect the mapper class
             Class<?> obj = Class.forName(Constants.Class_PREFIX
                     + this.mapperClass);
@@ -60,10 +65,14 @@ public class MapperPerform extends Thread {
             }
             reader.close();
             fd.close();
-
+            
+           /* if(SlaveListen.ListenSocket.getLocalPort() == 9003) {
+            	System.exit(0);
+            }
+            */
             // send each splits to reducers
             sendSplits();
-
+ 
             // send complete to master
             Socket sock = new Socket(Constants.MasterIp,
                     Constants.SlaveActivePort);
@@ -93,6 +102,17 @@ public class MapperPerform extends Thread {
                 
                 new Message(MSG_TYPE.FILE_DOWNLOAD, new CompleteMsg(fileName, SlaveListen.sockComMsg, null)).send(socket,
                         null, -1);
+                if(sentFileMap.containsKey(socket.getRemoteSocketAddress())) {
+                	ArrayList<String> tmpList = sentFileMap.get(socket.getRemoteSocketAddress());
+                	tmpList.add(fileName);
+                	
+                }
+                else {
+                	ArrayList<String> newList = new ArrayList<String>();
+                	newList.add(fileName);
+                	sentFileMap.put(socket.getRemoteSocketAddress(), newList);
+                }
+                	
                 System.out.println("Successs in 96");
                 // send file
                 FileTransmitServer.sendFile(fileName, socket);

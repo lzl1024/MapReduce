@@ -85,7 +85,17 @@ public class SlaveCompute extends Thread {
                         fileLeftMap
                                 .put(jobID, msgContent.getfileNames().size());
                     }
-
+                    
+                    if (SlaveCompute.fileLeftMap.get(jobID) == 0) {
+                        // start waiting threads
+                        for (Thread thread : SlaveCompute.waitingThreadMap
+                                .get(jobID)) {
+                            thread.start();
+                        }
+                        SlaveCompute.waitingThreadMap.remove(jobID);
+                        SlaveCompute.fileLeftMap.remove(jobID);
+                    }
+                    
                     System.out.println(fileLeftMap);
                     break;
                 case NOTIFY_PORT:
@@ -143,6 +153,7 @@ System.out.println("download soceket in line 127" + downloadSocket);
                     break;
                 }
             } catch (Exception e) {
+            	e.printStackTrace();
                 System.out.println("Connection to master broke");
                 System.exit(0);
             }
