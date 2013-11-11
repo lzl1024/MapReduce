@@ -25,22 +25,30 @@ public class SlaveChangeReduce extends Thread {
         if (msg != null) {
             SocketAddress oldSocketAddr = msg.getOld();
             SocketAddress newSocketAddr = msg.getNew();
+            System.out.println("old sockADDR" + oldSocketAddr);
+            System.out.println("new sockADDR" + newSocketAddr);
             for (int i = 0; i < SlaveCompute.mapperThreadList.size(); i++) {
                 MapperPerform newMapper = (MapperPerform) SlaveCompute.mapperThreadList
                         .get(i);
                 ArrayList<SocketAddress> list = newMapper.getReduceList();
+                System.out.println("reducelist is" + list);
                 int index = list.indexOf(oldSocketAddr);
-                list.set(index, newSocketAddr);
+                if(index != -1)
+                	list.set(index, newSocketAddr);
+                
             }
             Socket sock = new Socket();
             try {
-				sock.connect(newSocketAddr);
+				
 				ArrayList<String> failedFiles = SlaveCompute.failedCache.get(oldSocketAddr);
-				for(String e : failedFiles) {
-					new Message(MSG_TYPE.FILE_DOWNLOAD, e).send(sock, null, -1);
-					FileTransmitServer.sendFile(e, sock);
+				if(failedFiles != null) {
+					for(String e : failedFiles) {
+						sock.connect(newSocketAddr);
+						new Message(MSG_TYPE.FILE_DOWNLOAD, e).send(sock, null, -1);
+						FileTransmitServer.sendFile(e, sock);
+						sock.close();
+					}
 				}
-				sock.close();
 			} catch (Exception e) {
 				System.out.println("send files in failedCache failure.");
 				

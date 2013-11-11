@@ -12,8 +12,8 @@ import util.Constants;
 import dfs.FileTransmitServer;
 
 public class SlaveListen extends Thread {
-    private ServerSocket ListenSocket = null;
-
+    public static ServerSocket ListenSocket = null;
+    
     public SlaveListen(int port) {
         try {
             this.ListenSocket = new ServerSocket(port);
@@ -30,17 +30,27 @@ public class SlaveListen extends Thread {
             Message msgIn = null;
             try {
                 sock = ListenSocket.accept();
+System.out.println("sock Remote" + sock.getRemoteSocketAddress());
                 msgIn = Message.receive(sock, null, -1);
             } catch (Exception e) {
                 e.printStackTrace();
+                try {
+					sock.close();
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+                continue;
             }
             switch (msgIn.getType()) {
             case FILE_DOWNLOAD:
                 String receiveFileName = (String) msgIn.getContent();
 
                 try {
+System.out.println("sock in SlaveListen line 52 is" + sock);
                     FileTransmitServer.receiveFile(receiveFileName
-                            + Constants.REFUCE_FILE_SUFFIX, sock);
+                            + Constants.REDUCE_FILE_SUFFIX, sock);
+
                 } catch (Exception e) {
                     try {
                         // send node fail message to inform master
@@ -101,8 +111,9 @@ public class SlaveListen extends Thread {
                 System.out
                         .println("Slave now is requested to send files to user");
 
-                new FileTransmitServer.SlaveSendFile(sock,
+               new FileTransmitServer.SlaveSendFile(sock,
                         (String) msgIn.getContent()).start();
+
                 break;
             case FILE_SPLIT_REQ:
                 try {

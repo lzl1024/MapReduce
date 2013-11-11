@@ -78,7 +78,14 @@ public class Scheduler extends Thread {
 
                 for (SocketAddress add : (ArrayList<SocketAddress>) msg
                         .getContent()) {
-                    content.add(MasterMain.listenToActive.get(add));
+System.out.println("add is" + add);
+                	if(MasterMain.listenToActive.get(add) == null) {
+
+                		content.add(MasterMain.failedActiveMap.get(add));
+                	}
+                	else {
+                		content.add(MasterMain.listenToActive.get(add));
+                	}
                 }
                 MasterMain.handleLeave(content);
                 break;
@@ -356,7 +363,8 @@ public class Scheduler extends Thread {
             e.printStackTrace();
             throw new Exception("Split File Failed");
         }
-
+        
+System.out.println("we got current FS");
         // schedule reducers
         ArrayList<SocketAddress> reducerList = new ArrayList<SocketAddress>();
         Collections.sort(slaveList, new SlaveInfo.ReducerPrio());
@@ -422,6 +430,7 @@ public class Scheduler extends Thread {
             // update slave info
             MasterMain.slavePool.get(socket.getRemoteSocketAddress())
                     .getReducerTasks().add(new ReduceTaskUnit(job.getJobID(), index));
+
             new Message(MSG_TYPE.REDUCER_REQ, msg).send(socket, null, -1);
             Message.receive(socket, null, -1);
 

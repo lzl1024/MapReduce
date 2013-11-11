@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -31,7 +32,10 @@ public class MasterMain {
     // key : slave to slave port, value : slave to master port
     public static ConcurrentHashMap<SocketAddress, SocketAddress> listenToActive = new ConcurrentHashMap<SocketAddress, SocketAddress>();
     public static int curPort;
-
+    //key is listenToActive value is slavePool
+    public static ConcurrentHashMap<SocketAddress, SocketAddress> failedActiveMap = new ConcurrentHashMap<SocketAddress, SocketAddress>();
+    //key is slavePool
+    public static ConcurrentHashMap<SocketAddress, SocketAddress> failedMap = new ConcurrentHashMap<SocketAddress, SocketAddress>();
     public static void main(String[] args) {
         // fill up the constants
 
@@ -109,7 +113,20 @@ public class MasterMain {
      * 
      * @param content
      */
-    public static void handleLeave(ArrayList<SocketAddress> removeList) {
+    public synchronized static void handleLeave(ArrayList<SocketAddress> removeListorg) {
+    	synchronized(MasterMain.failedActiveMap) {
+    		synchronized(MasterMain.slavePool) {
+    			synchronized(MasterMain.listenToActive) {
+
+    	ArrayList<SocketAddress> removeList = new ArrayList<SocketAddress>();
+    	System.out.println("removeListorg is" + removeListorg);
+    	for(SocketAddress delete : removeListorg) {
+    		System.out.println("delete is" + delete);
+    		System.out.println("MasterMain.failedMap" + MasterMain.failedActiveMap);
+    		if(!MasterMain.failedActiveMap.containsValue(delete)) {
+    			removeList.add(delete);
+    		}
+    	}
 
         System.out.println("removeList is" + removeList);
 
@@ -119,14 +136,22 @@ public class MasterMain {
         }
 
         // delete the slave from pool, in case of the new mapper fail
-        synchronized (slavePool) {
-            for (SocketAddress add : removeList) {
-                MasterMain.listenToActive.remove(MasterMain.slavePool.get(add)
-                        .getSocketAddr());
-                MasterMain.slavePool.remove(add);
 
-            }
+        for (SocketAddress add : removeList) {
+System.out.println("listenToActive is" + MasterMain.listenToActive);
+System.out.println("add is" + add);
+System.out.println("slavePool is" + MasterMain.slavePool);
+			MasterMain.failedActiveMap.put(MasterMain.slavePool.get(add)
+						.getSocketAddr(), add);
+			MasterMain.failedMap.put(add, MasterMain.slavePool.get(add)
+						.getSocketAddr());
+            MasterMain.listenToActive.remove(MasterMain.slavePool.get(add)
+                        .getSocketAddr());
+            MasterMain.slavePool.remove(add);
+                
+                
         }
+        
 
         ArrayList<SlaveInfo> slaveList = new ArrayList<SlaveInfo>(
                 MasterMain.slavePool.values());
@@ -174,12 +199,11 @@ public class MasterMain {
                         reduceTask.jobID), reduceTask.index);
                 for (SlaveInfo info : slaveList) {
                     Socket sock = info.getSocket();
-                    ChangeReduceMsg msg = new ChangeReduceMsg(sockAddr,
+                    ChangeReduceMsg msg = new ChangeReduceMsg(MasterMain.failedMap.get(sockAddr),
                             slaveList.get(0).getSocketAddr());
                     try {
                         new Message(MSG_TYPE.CHANGE_REDUCELIST, msg).send(sock,
                                 null, -1);
-                        break;
                     } catch (Exception e) {
                         failList.add(sock.getRemoteSocketAddress());
                     }
@@ -192,7 +216,9 @@ public class MasterMain {
                 handleLeave(failList);
             }
         }
-
+    			}
+    		}
+    	}
     }
 
     /**
@@ -246,6 +272,9 @@ public class MasterMain {
                     // update layout
                     FileSplit.splitLayout.get(entry.getKey()).add(
                             reciever.getRemoteSocketAddress());
+                    Message.receive(reciever, null, -1);
+                    
+                    
                 } catch (Exception e) {
                     ArrayList<SocketAddress> add = new ArrayList<SocketAddress>();
                     add.add(reciever.getRemoteSocketAddress());

@@ -137,23 +137,28 @@ public class Job implements Serializable {
             System.out.println("configure file missing!");
             System.exit(1);
         }
+        Message msgIn = null;
+        try {
+        	Socket sock = new Socket(Constants.MasterIp, Constants.SlaveActivePort);
 
-        Socket sock = new Socket(Constants.MasterIp, Constants.SlaveActivePort);
+        	// send file to server
+        	String fileName = Constants.FS_LOCATION + this.inputFile;
+        	new Message(Message.MSG_TYPE.PUT_FILE, fileName).send(sock, null, -1);
+        	FileTransmitServer.sendFile(fileName, sock);
+        	if (!sock.isClosed()) {
+        		sock.close();
+        	}
 
-        // send file to server
-        String fileName = Constants.FS_LOCATION + this.inputFile;
-        new Message(Message.MSG_TYPE.PUT_FILE, fileName).send(sock, null, -1);
-        FileTransmitServer.sendFile(fileName, sock);
-        if (!sock.isClosed()) {
-            sock.close();
+        	sock = new Socket(Constants.MasterIp, Constants.SlaveActivePort);
+        	// send the job to master and and wait for completion
+        	new Message(Message.MSG_TYPE.NEW_JOB, this).send(sock, null, -1);
+        
+        	msgIn = Message.receive(sock, null, -1);
+        	sock.close(); 
+        } catch(Exception e) {
+        	System.out.println("Cannot connect to Master!");
+        	System.exit(0);
         }
-
-        sock = new Socket(Constants.MasterIp, Constants.SlaveActivePort);
-        // send the job to master and and wait for completion
-        new Message(Message.MSG_TYPE.NEW_JOB, this).send(sock, null, -1);
-
-        Message msgIn = Message.receive(sock, null, -1);
-        sock.close(); 
         if (msgIn.getType() == MSG_TYPE.WORK_COMPLETE) {
             Integer jobID = (Integer) msgIn.getContent();
             // user get file from dfs and delete file from dfs

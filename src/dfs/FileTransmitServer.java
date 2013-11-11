@@ -30,7 +30,7 @@ public class FileTransmitServer {
             throws IOException {
         System.out.println("send File: " + fileName + ", sock: "
                 + socket.getRemoteSocketAddress());
-
+System.out.println("local addr" + socket.getLocalPort());
         DataInputStream file = null;
         DataOutputStream sockdata = null;
         try {
@@ -79,7 +79,7 @@ public class FileTransmitServer {
         file.close();
 
         if (!total) {
-            System.out.println("The file has been deleted on the other side");
+            System.out.println("The file has been deleted on the other side : " + fileName);
             throw new Exception();
         } else {
             System.out.println("receive File: " + fileName + ", sock: "

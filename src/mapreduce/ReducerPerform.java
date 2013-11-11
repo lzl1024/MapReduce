@@ -73,7 +73,7 @@ public class ReducerPerform extends Thread {
         for (int i = 0; i < fileNames.size(); i++) {
             try {
                 FileReader fd = new FileReader(fileNames.get(i)
-                        + Constants.REFUCE_FILE_SUFFIX);
+                        + Constants.REDUCE_FILE_SUFFIX);
                 BufferedReader reader = new BufferedReader(fd);
                 ArrayList<KVPair> records = new ArrayList<KVPair>();
                 String line;

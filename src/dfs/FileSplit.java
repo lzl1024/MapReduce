@@ -144,21 +144,16 @@ public class FileSplit {
 
             // dispatch replicas
             for (int i = 0; i < Constants.ReplFac; i++) {
+            	SocketAddress key = null;
                 try {
-                    Socket fileSocket = new Socket();
-
-                    fileSocket.connect(freeMappers.get(mapperPointer));
-                    downloadREQ.send(fileSocket, null, -1);
-
-                    FileTransmitServer.sendFile(fileSplit, fileSocket);
-                    if (!fileSocket.isClosed()) {
-                        fileSocket.close();
-                    }
-
-                    // download success, add record that which mapper get split
-                    SocketAddress key = MasterMain.listenToActive
+                    key = MasterMain.listenToActive
                             .get(freeMappers.get(mapperPointer));
-
+                    if(MasterMain.failedActiveMap.containsKey(freeMappers.get(mapperPointer))) {
+                    	key = MasterMain.failedActiveMap.get(freeMappers.get(mapperPointer));
+                    	throw new Exception();
+                    }
+                    // download success, add record that which mapper get split
+      
                     if (splitLayout.containsKey(fileSplit)) {
                         splitLayout.get(fileSplit).add(key);
                     } else {
@@ -166,9 +161,20 @@ public class FileSplit {
                         tmp.add(key);
                         splitLayout.put(fileSplit, tmp);
                     }
+                    
+                    Socket fileSocket = new Socket();
+
+                    fileSocket.connect(freeMappers.get(mapperPointer));
+                    downloadREQ.send(fileSocket, null, -1);
+                    
                     // add the splits number in slave
                     MasterMain.slavePool.get(key).setSplits(
                             MasterMain.slavePool.get(key).getSplits() + 1);
+
+                    FileTransmitServer.sendFile(fileSplit, fileSocket);
+                    if (!fileSocket.isClosed()) {
+                        fileSocket.close();
+                    }
 
                     // add to entry
                     splitSock.add(key);
@@ -176,9 +182,9 @@ public class FileSplit {
                     mapperPointer = (mapperPointer + 1) % freeMappers.size();
                 } catch (Exception e) {
                     // add to fail mapper list if timeout
-                    failedMappers.add(MasterMain.listenToActive.get(freeMappers
-                            .get(mapperPointer)));
+                    failedMappers.add(key);
                     freeMappers.remove(mapperPointer);
+                    mapperPointer = mapperPointer % freeMappers.size();
 
                     // too many free mappers fail!
                     if (freeMappers.size() < Constants.ReplFac) {

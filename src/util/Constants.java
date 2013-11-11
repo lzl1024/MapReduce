@@ -46,7 +46,7 @@ public class Constants {
     public static int Random_Base = 1000;
     public static String Class_PREFIX = "examples.";
     public static final int BufferSize = 8196;
-    public static String REFUCE_FILE_SUFFIX = "_REDUCE";
+    public static String REDUCE_FILE_SUFFIX = "_REDUCE";
     public static String divisor = "!#$";
 
     /**

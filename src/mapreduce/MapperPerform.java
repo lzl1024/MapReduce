@@ -88,6 +88,7 @@ public class MapperPerform extends Thread {
             String fileName = splitName + "_" + (i + 1);
             try {
                 socket.connect(add);
+                
                 new Message(MSG_TYPE.FILE_DOWNLOAD, fileName).send(socket,
                         null, -1);
 
@@ -122,7 +123,6 @@ public class MapperPerform extends Thread {
                 masterSocket.close();
             } catch (Exception e) {
                 System.out.println("Failed to connect with the Master");
-                e.printStackTrace();
                 System.exit(-1);
             }
 

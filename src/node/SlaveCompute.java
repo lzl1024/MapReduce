@@ -58,11 +58,18 @@ public class SlaveCompute extends Thread {
                     newMapper.start();
                     break;
                 case REDUCER_REQ:
+
                     new Message(MSG_TYPE.REDUCER_REQ, null).send(sockToMaster,
                             null, -1);
+
+                    /*if(SlaveListen.ListenSocket.getLocalPort() == 9003) {
+                    	System.exit(0);
+                    }
+                    */
                     // Create a thread to perform reducer task
                     ReducerAckMsg msgContent = (ReducerAckMsg) msgIn
                             .getContent();
+                    
                     int jobID = msgContent.getJobID();
                     Thread newReducer = new ReducerPerform(msgContent);
 
@@ -82,6 +89,7 @@ public class SlaveCompute extends Thread {
                     System.out.println(fileLeftMap);
                     break;
                 case NOTIFY_PORT:
+                	System.out.println("curPort is" + (Integer) msgIn.getContent());
                     new SlaveListen((Integer) msgIn.getContent()).start();
                     // send back to master same msg
                     msgIn.send(sockToMaster, null, -1);
@@ -104,10 +112,15 @@ public class SlaveCompute extends Thread {
                     Socket downloadSocket = new Socket();
                     try {
                         downloadSocket.connect(downloadMsg.getSockAddr());
+System.out.println("download soceket in line 127" + downloadSocket);                        
                         new Message(MSG_TYPE.GET_FILE,
                                 downloadMsg.getSplitName()).send(
                                 downloadSocket, null, -1);
+                        new FileTransmitServer.SlaveDownload(downloadSocket,
+                                downloadMsg.getSplitName()).start();               
+
                     } catch (Exception e) {
+                    	e.printStackTrace();
                         try {
                             // send node fail message to inform master
                             Socket failSock = new Socket(Constants.MasterIp,
@@ -117,15 +130,14 @@ public class SlaveCompute extends Thread {
 
                             new Message(MSG_TYPE.NODE_FAIL, tmp).send(failSock,
                                     null, -1);
+                            
                         } catch (Exception e1) {
                             System.out
                                     .println("Failed to connect with the Master");
                             System.exit(-1);
                         }
                     }
-
-                    new FileTransmitServer.SlaveDownload(downloadSocket,
-                            downloadMsg.getSplitName()).start();
+                    new Message(MSG_TYPE.FILE_DOWNLOAD, null).send(sockToMaster, null, -1);
                     break;
                 default:
                     break;
