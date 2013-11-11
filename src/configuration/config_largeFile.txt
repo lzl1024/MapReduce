@@ -1,0 +1,22 @@
+//Socket Configuration
+MainRoutingPort=10160
+SlaveActivePort=10162
+MasterIp=localhost
+
+//Network Configuration
+FileDownloadTimeout=200000
+RegularTimout=5000
+
+//Rule Configuration
+IdealReducerNum=2
+IdealMapperJobs=2
+IdealReducerJobs=2
+ReplFac=2
+
+//Port realm
+startPort = 9000
+endPort = 10000
+
+//DFS Configuration 
+//200MB
+ChunkSize=209715200
