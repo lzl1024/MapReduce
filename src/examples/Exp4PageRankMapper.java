@@ -16,7 +16,7 @@ public class Exp4PageRankMapper extends Mapper {
         String[] elements = line.split("\\s+");
         ArrayList<String> companys = new ArrayList<String>(Arrays.asList(
                 "Yahoo", "Facebook", "Google", "Tintri", "Amazon"));
-        if(elements.length != 3) {
+        if(elements.length != 4) {
         	return;
         }
         LongWritable pageRank = new LongWritable(Long.parseLong(elements[2]));
