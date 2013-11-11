@@ -50,7 +50,7 @@ System.out.println("sock Remote" + sock.getRemoteSocketAddress());
                 String receiveFileName = msgCom.getSplitName();
 
                 try {
-System.out.println("sock in SlaveListen line 52 is" + sock);
+System.out.println("sock in SlaveListen line 52 is " + sock + " fileName: "+ receiveFileName);
                     FileTransmitServer.receiveFile(receiveFileName
                             + Constants.REDUCE_FILE_SUFFIX, sock);
 

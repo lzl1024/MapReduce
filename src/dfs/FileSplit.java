@@ -9,7 +9,6 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import node.MasterMain;
@@ -122,7 +121,7 @@ public class FileSplit {
      * @throws Exception
      * @throws IOException
      */
-    public static HashMap<String, ArrayList<SocketAddress>> fileDispatch(
+    public static ArrayList<String> fileDispatch(
             ArrayList<SocketAddress> freeMappers, String fileName, int jobID,
             Long recordBegin, Long recordEnd) throws Exception {
         // split the file
@@ -130,7 +129,6 @@ public class FileSplit {
                 recordEnd);
 
         ArrayList<SocketAddress> failedMappers = new ArrayList<SocketAddress>();
-        HashMap<String, ArrayList<SocketAddress>> returnLayout = new HashMap<String, ArrayList<SocketAddress>>();
 
         int mapperPointer = 0;
 
@@ -144,16 +142,18 @@ public class FileSplit {
 
             // dispatch replicas
             for (int i = 0; i < Constants.ReplFac; i++) {
-            	SocketAddress key = null;
+                SocketAddress key = null;
                 try {
-                    key = MasterMain.listenToActive
-                            .get(freeMappers.get(mapperPointer));
-                    if(MasterMain.failedActiveMap.containsKey(freeMappers.get(mapperPointer))) {
-                    	key = MasterMain.failedActiveMap.get(freeMappers.get(mapperPointer));
-                    	throw new Exception();
+                    key = MasterMain.listenToActive.get(freeMappers
+                            .get(mapperPointer));
+                    if (MasterMain.failedActiveMap.containsKey(freeMappers
+                            .get(mapperPointer))) {
+                        key = MasterMain.failedActiveMap.get(freeMappers
+                                .get(mapperPointer));
+                        throw new Exception();
                     }
                     // download success, add record that which mapper get split
-      
+
                     if (splitLayout.containsKey(fileSplit)) {
                         splitLayout.get(fileSplit).add(key);
                     } else {
@@ -161,12 +161,12 @@ public class FileSplit {
                         tmp.add(key);
                         splitLayout.put(fileSplit, tmp);
                     }
-                    
+
                     Socket fileSocket = new Socket();
 
                     fileSocket.connect(freeMappers.get(mapperPointer));
                     downloadREQ.send(fileSocket, null, -1);
-                    
+
                     // add the splits number in slave
                     MasterMain.slavePool.get(key).setSplits(
                             MasterMain.slavePool.get(key).getSplits() + 1);
@@ -193,18 +193,17 @@ public class FileSplit {
                     }
                 }
             }
-
-            returnLayout.put(fileSplit, splitSock);
         }
 
-        MasterMain.handleLeave(failedMappers);
-
+        if (failedMappers.size() > 0) {
+            MasterMain.handleLeave(failedMappers);
+        }
         // delete file splits in master
         for (String file : fileSplits) {
             new File(file).delete();
         }
 
-        return returnLayout;
+        return fileSplits;
     }
 
     // for test

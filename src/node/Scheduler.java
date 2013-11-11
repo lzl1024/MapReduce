@@ -8,12 +8,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map.Entry;
-
-import node.SlaveInfo.reduceTaskUnit;
 
 import mapreduce.Job;
 import mapreduce.JobInfo;
+import node.SlaveInfo.reduceTaskUnit;
 import socket.CompleteMsg;
 import socket.MapperAckMsg;
 import socket.Message;
@@ -354,9 +352,9 @@ System.out.println("add is" + add);
         }
 
         // split files
-        HashMap<String, ArrayList<SocketAddress>> layout;
+        ArrayList<String> splits = null;
         try {
-            layout = FileSplit.fileDispatch(freeMappers, job.getInputFile(),
+            splits = FileSplit.fileDispatch(freeMappers, job.getInputFile(),
                     job.getJobID(), job.getRecordBegin(), job.getRecordEnd());
             System.out.println("Current FS Layout: " + FileSplit.splitLayout);
         } catch (Exception e) {
@@ -364,7 +362,6 @@ System.out.println("add is" + add);
             throw new Exception("Split File Failed");
         }
         
-System.out.println("we got current FS");
         // schedule reducers
         ArrayList<SocketAddress> reducerList = new ArrayList<SocketAddress>();
         Collections.sort(slaveList, new SlaveInfo.ReducerPrio());
@@ -386,16 +383,19 @@ System.out.println("we got current FS");
             System.out.println("reducer size is " + reducerList.size());
         }
 
+        
         // schedule mappers
         HashSet<SocketAddress> takedSock = new HashSet<SocketAddress>();
         // if every one in the list has a job, choose index failIterate
         int failIterate = 0;
-        for (Entry<String, ArrayList<SocketAddress>> entry : layout.entrySet()) {
+        for (String fileName : splits) {
+            // get the updated layout in case of fail            
             // go through to find an available socket
+            ArrayList<SocketAddress> addList  = FileSplit.splitLayout.get(fileName);
             boolean flag = false;
-            for (SocketAddress sock : entry.getValue()) {
+            for (SocketAddress sock : addList) {
                 if (!takedSock.contains(sock)) {
-                    inviteMapper(sock, job, reducerList, entry.getKey());
+                    inviteMapper(sock, job, reducerList, fileName);
                     takedSock.add(sock);
                     // update slave info
 
@@ -405,10 +405,10 @@ System.out.println("we got current FS");
             }
             // if not find, take the failIterate
             if (!flag) {
-                SocketAddress tmp = entry.getValue().get(
-                        failIterate % entry.getValue().size());
+                SocketAddress tmp = addList.get(
+                        failIterate % addList.size());
                 failIterate++;
-                inviteMapper(tmp, job, reducerList, entry.getKey());
+                inviteMapper(tmp, job, reducerList, fileName);
             }
         }
 

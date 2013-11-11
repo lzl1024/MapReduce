@@ -6,13 +6,11 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
-import node.SlaveInfo.reduceTaskUnit;
-
 import mapreduce.Job;
+import node.SlaveInfo.reduceTaskUnit;
 import socket.ChangeReduceMsg;
 import socket.CompleteMsg;
 import socket.Message;
@@ -195,8 +193,9 @@ System.out.println("slavePool is" + MasterMain.slavePool);
                 // change with balanced load
                 Collections.sort(slaveList, new SlaveInfo.ReducerPrio());
 
-                Scheduler.inviteReducer(slaveList.get(0).getSocket(), new Job(
-                        reduceTask.jobID), reduceTask.index);
+                
+                Scheduler.inviteReducer(slaveList.get(0).getSocket(), 
+                        Scheduler.jobPool.get(reduceTask.jobID).getJob(), reduceTask.index);
                 for (SlaveInfo info : slaveList) {
                     Socket sock = info.getSocket();
                     ChangeReduceMsg msg = new ChangeReduceMsg(MasterMain.failedMap.get(sockAddr),

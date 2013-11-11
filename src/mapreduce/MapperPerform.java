@@ -109,6 +109,8 @@ public class MapperPerform extends Thread {
                     SlaveCompute.failedCache.put(add, tmp);
                 }
                 failNode.add(add);
+                
+                System.out.println(SlaveCompute.failedCache);
             }
         }
 

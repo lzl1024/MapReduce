@@ -37,17 +37,21 @@ public class SlaveChangeReduce extends Thread {
                 
             }
             Socket sock = new Socket();
+ System.out.println("faileChache: " + SlaveCompute.failedCache);
             ArrayList<String> failedFiles = SlaveCompute.failedCache.get(oldSocketAddr);
+
             try {			
-				// remove the oldscoketAddr in failed Cache
-				SlaveCompute.failedCache.remove(oldSocketAddr);
 				if(failedFiles != null) {
-					for(String e : failedFiles) {
+	                // remove the oldscoketAddr in failed Cache
+	                SlaveCompute.failedCache.remove(oldSocketAddr);
+System.out.println("failedFiles: " + failedFiles);
+                    for (int i = failedFiles.size()-1; i >=0 ; i--) {
+                        String e = failedFiles.get(i);
 						sock.connect(newSocketAddr);
 						new Message(MSG_TYPE.FILE_DOWNLOAD, new CompleteMsg(e, SlaveListen.sockComMsg, null)).send(sock, null, -1);
 						FileTransmitServer.sendFile(e, sock);
 						sock.close();
-						failedFiles.remove(e);
+						failedFiles.remove(i);
 					}
 				}
 				
@@ -56,9 +60,11 @@ public class SlaveChangeReduce extends Thread {
 				System.out.println("send files in failedCache failure.");
 				// update the failedCache place
 				SlaveCompute.failedCache.put(newSocketAddr, failedFiles);
+				ArrayList<SocketAddress> tmp = new ArrayList<SocketAddress>();
+				tmp.add(newSocketAddr);
 				try {
 					Socket socket = new Socket(Constants.MasterIp, Constants.SlaveActivePort);
-					new Message(MSG_TYPE.NODE_FAIL, newSocketAddr).send(socket, null, -1);
+					new Message(MSG_TYPE.NODE_FAIL, tmp).send(socket, null, -1);
 					socket.close();
 				} catch (Exception e1) {
 					System.out.println("Yourself failed");
