@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -111,7 +112,8 @@ public class MasterMain {
      * 
      * @param content
      */
-    public synchronized static void handleLeave(ArrayList<SocketAddress> removeListorg) {
+    public synchronized static HashMap<SocketAddress, SocketAddress> handleLeave(ArrayList<SocketAddress> removeListorg) {
+    	HashMap<SocketAddress, SocketAddress> map = new HashMap<SocketAddress, SocketAddress>();
     	synchronized(MasterMain.failedActiveMap) {
     		synchronized(MasterMain.slavePool) {
     			synchronized(MasterMain.listenToActive) {
@@ -187,27 +189,27 @@ System.out.println("slavePool is" + MasterMain.slavePool);
 
             // failed node list
             ArrayList<SocketAddress> failList = new ArrayList<SocketAddress>();
-
+            
+            // change with balanced load
+            Collections.sort(slaveList, new SlaveInfo.ReducerPrio());
+            map.put(MasterMain.failedMap.get(sockAddr), slaveList.get(0).getSocketAddr());
+            for (SlaveInfo info : slaveList) {
+                Socket sock = info.getSocket();
+                ChangeReduceMsg msg = new ChangeReduceMsg(MasterMain.failedMap.get(sockAddr),
+                        slaveList.get(0).getSocketAddr());
+                try {
+                    new Message(MSG_TYPE.CHANGE_REDUCELIST, msg).send(sock,
+                            null, -1);
+                } catch (Exception e) {
+                    failList.add(sock.getRemoteSocketAddress());
+                }
+            }
             // move its reduce jobs to other hosts
             for (reduceTaskUnit reduceTask : removed.get(k).getReducerTasks()) {
-                // change with balanced load
-                Collections.sort(slaveList, new SlaveInfo.ReducerPrio());
-
                 
                 Scheduler.inviteReducer(slaveList.get(0).getSocket(), 
-                        Scheduler.jobPool.get(reduceTask.jobID).getJob(), reduceTask.index);
-                for (SlaveInfo info : slaveList) {
-                    Socket sock = info.getSocket();
-                    ChangeReduceMsg msg = new ChangeReduceMsg(MasterMain.failedMap.get(sockAddr),
-                            slaveList.get(0).getSocketAddr());
-                    try {
-                        new Message(MSG_TYPE.CHANGE_REDUCELIST, msg).send(sock,
-                                null, -1);
-                    } catch (Exception e) {
-                        failList.add(sock.getRemoteSocketAddress());
-                    }
-                }
-
+                        Scheduler.jobPool.get(reduceTask.jobID).getJob(), reduceTask.index, null);
+                
             }
 
             // failed again, handle leave
@@ -218,6 +220,7 @@ System.out.println("slavePool is" + MasterMain.slavePool);
     			}
     		}
     	}
+    	return map;
     }
 
     /**

@@ -157,6 +157,7 @@ System.out.println("add is" + add);
                 // update file layout and slavePool
                 CompleteMsg receiveMsg = (CompleteMsg) msg.getContent();
 
+               // if(MasterMain.slavePool.get(receiveMsg.getSockAddr()) == null)
                 MasterMain.slavePool.get(receiveMsg.getSockAddr())
                         .getMapperTasks().remove(receiveMsg.getSplitName());
 
@@ -370,7 +371,7 @@ System.out.println("add is" + add);
                 && slaveList.get(i).getReducerTasks().size() < Constants.IdealReducerJobs; i++) {
             if (reducerList.size() < Constants.IdealReducerNum) {
                 reducerList.add(slaveList.get(i).getSocketAddr());
-                inviteReducer(slaveList.get(i).getSocket(), job, i + 1);
+                inviteReducer(slaveList.get(i).getSocket(), job, i + 1, reducerList);
             } else {
                 break;
             }
@@ -423,7 +424,7 @@ System.out.println("add is" + add);
      * @param job
      * @param index
      */
-    public static void inviteReducer(Socket socket, Job job, int index) {
+    public static void inviteReducer(Socket socket, Job job, int index, ArrayList<SocketAddress> reducerList) {
         ReducerAckMsg msg = new ReducerAckMsg(Constants.IdealMapperNum, job,
                 index);
         try {
@@ -440,7 +441,13 @@ System.out.println("add is" + add);
             System.out.println("Invite reducer failed");
             ArrayList<SocketAddress> tmp = new ArrayList<SocketAddress>();
             tmp.add(socket.getRemoteSocketAddress());
-            MasterMain.handleLeave(tmp);
+            HashMap<SocketAddress, SocketAddress> map = MasterMain.handleLeave(tmp);
+            for(SocketAddress sockaddr : map.keySet()) {
+            	int idx = 0;
+            	if((idx = reducerList.indexOf(sockaddr)) != -1) {
+            		reducerList.set(idx, map.get(sockaddr));
+            	}
+            }
         }
 
     }

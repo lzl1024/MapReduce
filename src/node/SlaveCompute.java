@@ -62,10 +62,10 @@ public class SlaveCompute extends Thread {
                     new Message(MSG_TYPE.REDUCER_REQ, null).send(sockToMaster,
                             null, -1);
 
-                    if(SlaveListen.ListenSocket.getLocalPort() == 9003) {
+                    /*if(SlaveListen.ListenSocket.getLocalPort() == 9003) {
                     	System.exit(0);
                     }
-                    
+                    */
                     // Create a thread to perform reducer task
                     ReducerAckMsg msgContent = (ReducerAckMsg) msgIn
                             .getContent();
