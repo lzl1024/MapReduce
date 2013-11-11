@@ -9,6 +9,7 @@ import dfs.FileTransmitServer;
 
 import mapreduce.MapperPerform;
 import socket.ChangeReduceMsg;
+import socket.CompleteMsg;
 import socket.Message;
 import socket.Message.MSG_TYPE;
 import util.Constants;
@@ -44,7 +45,7 @@ public class SlaveChangeReduce extends Thread {
 				if(failedFiles != null) {
 					for(String e : failedFiles) {
 						sock.connect(newSocketAddr);
-						new Message(MSG_TYPE.FILE_DOWNLOAD, e).send(sock, null, -1);
+						new Message(MSG_TYPE.FILE_DOWNLOAD, new CompleteMsg(e, SlaveListen.sockComMsg, null)).send(sock, null, -1);
 						FileTransmitServer.sendFile(e, sock);
 						sock.close();
 					}

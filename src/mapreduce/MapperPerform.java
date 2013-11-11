@@ -12,6 +12,7 @@ import java.net.SocketAddress;
 import java.util.ArrayList;
 
 import node.SlaveCompute;
+import node.SlaveListen;
 import socket.CompleteMsg;
 import socket.MapperAckMsg;
 import socket.Message;
@@ -89,7 +90,7 @@ public class MapperPerform extends Thread {
             try {
                 socket.connect(add);
                 
-                new Message(MSG_TYPE.FILE_DOWNLOAD, fileName).send(socket,
+                new Message(MSG_TYPE.FILE_DOWNLOAD, new CompleteMsg(fileName, SlaveListen.sockComMsg, null)).send(socket,
                         null, -1);
 
                 // send file

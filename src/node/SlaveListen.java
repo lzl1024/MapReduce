@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 
+import socket.CompleteMsg;
 import socket.Message;
 import socket.Message.MSG_TYPE;
 import util.Constants;
@@ -13,7 +14,7 @@ import dfs.FileTransmitServer;
 
 public class SlaveListen extends Thread {
     public static ServerSocket ListenSocket = null;
-    
+    public static SocketAddress sockComMsg;
     public SlaveListen(int port) {
         try {
             this.ListenSocket = new ServerSocket(port);
@@ -30,6 +31,7 @@ public class SlaveListen extends Thread {
             Message msgIn = null;
             try {
                 sock = ListenSocket.accept();
+                sockComMsg = sock.getLocalSocketAddress();
 System.out.println("sock Remote" + sock.getRemoteSocketAddress());
                 msgIn = Message.receive(sock, null, -1);
             } catch (Exception e) {
@@ -44,7 +46,8 @@ System.out.println("sock Remote" + sock.getRemoteSocketAddress());
             }
             switch (msgIn.getType()) {
             case FILE_DOWNLOAD:
-                String receiveFileName = (String) msgIn.getContent();
+            	CompleteMsg msgCom = (CompleteMsg) msgIn.getContent();
+                String receiveFileName = msgCom.getSplitName();
 
                 try {
 System.out.println("sock in SlaveListen line 52 is" + sock);
@@ -57,7 +60,7 @@ System.out.println("sock in SlaveListen line 52 is" + sock);
                         Socket failSock = new Socket(Constants.MasterIp,
                                 Constants.SlaveActivePort);
                         ArrayList<SocketAddress> tmp = new ArrayList<SocketAddress>();
-                        tmp.add(sock.getRemoteSocketAddress());
+                        tmp.add(msgCom.getSockAddr());
 
                         new Message(MSG_TYPE.NODE_FAIL, tmp).send(failSock,
                                 null, -1);
