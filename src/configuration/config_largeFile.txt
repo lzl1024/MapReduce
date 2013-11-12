@@ -11,7 +11,6 @@ RegularTimout=5000
 IdealReducerNum=2
 IdealMapperJobs=2
 IdealReducerJobs=2
-ReplFac=2
 
 //Port realm
 startPort = 9000
@@ -20,3 +19,4 @@ endPort = 10000
 //DFS Configuration 
 //200MB
 ChunkSize=209715200
+ReplFac=2
