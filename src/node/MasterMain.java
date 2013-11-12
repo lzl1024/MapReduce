@@ -11,7 +11,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import mapreduce.Job;
-import node.SlaveInfo.reduceTaskUnit;
+import node.SlaveInfo.ReduceTaskUnit;
 import socket.ChangeReduceMsg;
 import socket.CompleteMsg;
 import socket.Message;
@@ -207,7 +207,7 @@ System.out.println("MAP AFTER ADDING " + map);
                 }
             }
             // move its reduce jobs to other hosts
-            for (reduceTaskUnit reduceTask : removed.get(k).getReducerTasks()) {
+            for (ReduceTaskUnit reduceTask : removed.get(k).getReducerTasks()) {
                 
                 Scheduler.inviteReducer(slaveList.get(0).getSocket(), 
                         Scheduler.jobPool.get(reduceTask.jobID).getJob(), reduceTask.index, null);

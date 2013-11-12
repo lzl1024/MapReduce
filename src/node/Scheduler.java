@@ -11,7 +11,7 @@ import java.util.HashSet;
 
 import mapreduce.Job;
 import mapreduce.JobInfo;
-import node.SlaveInfo.reduceTaskUnit;
+import node.SlaveInfo.ReduceTaskUnit;
 import socket.CompleteMsg;
 import socket.MapperAckMsg;
 import socket.Message;
@@ -138,7 +138,7 @@ System.out.println("(after remove)MapperJobSet is" + jobInfo.getMapperJobSet());
                     				e.getMapperTasks().remove(str);
                     			}
                     		}
-                    		for(reduceTaskUnit reTask :e.getReducerTasks()) {
+                    		for(ReduceTaskUnit reTask :e.getReducerTasks()) {
                     			if(reTask.jobID == jobID) {
                     				e.getReducerTasks().remove(reTask);
                     			}
@@ -450,7 +450,7 @@ System.out.println("(after remove)MapperJobSet is" + jobInfo.getMapperJobSet());
             // update slave info
             MasterMain.slavePool.get(socket.getRemoteSocketAddress())
 
-                    .getReducerTasks().add(new reduceTaskUnit(job.getJobID(), index));
+                    .getReducerTasks().add(new ReduceTaskUnit(job.getJobID(), index));
 
 
             new Message(MSG_TYPE.REDUCER_REQ, msg).send(socket, null, -1);
