@@ -2,31 +2,41 @@ package mapreduce;
 
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashSet;
+
+import util.Constants;
 
 public class JobInfo {
 
-    private int remainWorks;
     private Socket sock;
     private ArrayList<String> outSplitName;
     private Job job;
+	private HashSet<String> mapperJobSet;
 
+
+	
     public JobInfo(Job job, Socket sock, int remainWorks) {
         this.job = job;
         this.sock = sock;
-        this.remainWorks = remainWorks;
+
         outSplitName = new ArrayList<String>();
+        mapperJobSet = new HashSet<String>();
+        
         for (int i = 1; i <= remainWorks; i++) {
             outSplitName.add(job.getJobID() + "##_" + i + "_1");
+            mapperJobSet.add(Constants.FS_LOCATION + job.getJobID() + "##_" + i + "_1");
         }
     }
+    
+    public HashSet<String> getMapperJobSet() {
+		return mapperJobSet;
+	}
 
-    public int getRemainWorks() {
-        return remainWorks;
-    }
+	public void setMapperJobSet(HashSet<String> mapperJobSet) {
+		this.mapperJobSet = mapperJobSet;
+	}
+	
 
-    public void setRemainWorks(int remainWorks) {
-        this.remainWorks = remainWorks;
-    }
 
     public Socket getSock() {
         return sock;
@@ -50,7 +60,7 @@ public class JobInfo {
 
     @Override
     public String toString() {
-        return "[remainWorks=" + remainWorks + ", sock=" + sock
+        return "[sock=" + sock
                 + ", outSplitName=" + outSplitName + ", job=" + job + "]";
     }
 }

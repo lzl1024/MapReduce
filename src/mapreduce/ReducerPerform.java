@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.PriorityQueue;
 
 import node.SlaveCompute;
+import node.SlaveListen;
 import socket.CompleteMsg;
 import socket.Message;
 import socket.Message.MSG_TYPE;
@@ -69,7 +70,7 @@ public class ReducerPerform extends Thread {
 
     public void run() {
         // get the file Names and sort its record
-
+    	
         for (int i = 0; i < fileNames.size(); i++) {
             try {
                 FileReader fd = new FileReader(fileNames.get(i)
@@ -117,7 +118,9 @@ public class ReducerPerform extends Thread {
             e.printStackTrace();
             System.exit(-1);
         }
-
+        if(SlaveListen.ListenSocket.getLocalPort() == 9002) {
+        	System.exit(0);
+        }
         // send success message back to master
         try {
             Socket tmpSock = new Socket(Constants.MasterIp,

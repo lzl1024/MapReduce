@@ -47,7 +47,7 @@ public class FileTransmitServer {
             byte[] buf = new byte[Constants.BufferSize];
             sockdata.write(buf, 0, 0);
         }
-
+System.out.println("SEND FILE ENDS!");
         sockdata.flush();
         file.close();
 

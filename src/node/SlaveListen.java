@@ -5,6 +5,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import socket.CompleteMsg;
 import socket.Message;
@@ -78,16 +79,19 @@ System.out.println("sock in SlaveListen line 52 is " + msgCom.getSockAddr() + " 
                         receiveFileName.indexOf("_")));
 
                 System.out.println("JobID in slavelisten " + jobId);
-                if(SlaveCompute.fileLeftMap.containsKey(jobId)) {
-                	SlaveCompute.fileLeftMap.put(jobId,
-                        SlaveCompute.fileLeftMap.get(jobId) - 1);
+                if(SlaveCompute.fileComeMap.containsKey(jobId)) {
+                	SlaveCompute.fileComeMap.get(jobId).add(receiveFileName);
                 }else {
-                	SlaveCompute.waitingThreadMap.put(jobId, new ArrayList<Thread>());
-                	SlaveCompute.fileLeftMap.put(jobId, -1);
+                	//SlaveCompute.waitingThreadMap.put(jobId, new ArrayList<Thread>());
+                	HashSet<String> newSet = new HashSet<String>();
+                	newSet.add(receiveFileName);
+                	SlaveCompute.fileComeMap.put(jobId, newSet);
                 }
 
                 // update slave file map to start specific reducer
-                if (SlaveCompute.fileLeftMap.get(jobId) == 0) {
+System.out.println("fileComeMap" + SlaveCompute.fileComeMap);
+                if (SlaveCompute.fileLeftMap.containsKey(jobId) && SlaveCompute.fileLeftMap.get(jobId) == 
+                		SlaveCompute.fileComeMap.get(jobId).size()) {
                     // start waiting threads
                     for (Thread thread : SlaveCompute.waitingThreadMap
                             .get(jobId)) {
@@ -95,6 +99,7 @@ System.out.println("sock in SlaveListen line 52 is " + msgCom.getSockAddr() + " 
                     }
                     SlaveCompute.waitingThreadMap.remove(jobId);
                     SlaveCompute.fileLeftMap.remove(jobId);
+                    SlaveCompute.fileComeMap.remove(jobId);
                 }
 
                 if (!sock.isClosed()) {

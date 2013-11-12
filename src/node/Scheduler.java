@@ -28,7 +28,6 @@ import dfs.FileTransmitServer;
 public class Scheduler extends Thread {
     public static HashMap<Integer, JobInfo> jobPool = new HashMap<Integer, JobInfo>();
     public static HashMap<String, MapperAckMsg> MapperJob = new HashMap<String, MapperAckMsg>();
-
     public static HashSet<Integer> killedJob = new HashSet<Integer>();
 
     @SuppressWarnings({ "resource", "unchecked" })
@@ -113,21 +112,39 @@ System.out.println("add is" + add);
                                 .getSplits() + 1);
 
                 JobInfo jobInfo = jobPool.get(comMsg.getJobID());
-                int remain = jobInfo.getRemainWorks() - 1;
-                jobInfo.setRemainWorks(remain);
+System.out.println("(before remove)MapperJobSet is" + jobInfo.getMapperJobSet());
+System.out.println("comMsg.getSplitName()" + comMsg.getSplitName());
+                if(jobInfo.getMapperJobSet().contains(comMsg.getSplitName())) {
+                	jobInfo.getMapperJobSet().remove(comMsg.getSplitName());
+                }
+System.out.println("(after remove)MapperJobSet is" + jobInfo.getMapperJobSet());
                 // update slave pool
                 MasterMain.slavePool.get(comMsg.getSockAddr())
                         .getReducerTasks()
                         .remove(new Integer(jobInfo.getJob().getJobID()));
 
                 // complete the whole work
-                if (remain == 0) {
+                if (jobInfo.getMapperJobSet().size() == 0) {
                     System.out.println(FileSplit.splitLayout);
 
                     Integer jobID = jobInfo.getJob().getJobID();
                     // delete the file in master and in itself
                     deleteFile(Integer.toString(jobID));
                     try {
+                    	
+                    	for(SlaveInfo e : MasterMain.slavePool.values()) {
+                    		for(String str :e.getMapperTasks()) {
+                    			if(str.startsWith(jobID.toString())) {
+                    				e.getMapperTasks().remove(str);
+                    			}
+                    		}
+                    		for(reduceTaskUnit reTask :e.getReducerTasks()) {
+                    			if(reTask.jobID == jobID) {
+                    				e.getReducerTasks().remove(reTask);
+                    			}
+                    		}
+                    	}
+                    	
                         if (killedJob.contains(jobID)) {
                             new Message(Message.MSG_TYPE.WORK_KILLED, jobID)
                                     .send(jobInfo.getSock(), null, -1);
@@ -158,9 +175,10 @@ System.out.println("add is" + add);
                 CompleteMsg receiveMsg = (CompleteMsg) msg.getContent();
 
                // if(MasterMain.slavePool.get(receiveMsg.getSockAddr()) == null)
-                MasterMain.slavePool.get(receiveMsg.getSockAddr())
-                        .getMapperTasks().remove(receiveMsg.getSplitName());
+               // MasterMain.slavePool.get(receiveMsg.getSockAddr())
+               // .getMapperTasks().remove(receiveMsg.getSplitName());
 
+                
                 System.out.println("After Mapper FS Layout: "
                         + FileSplit.splitLayout);
 
@@ -364,6 +382,7 @@ System.out.println("add is" + add);
         }
         
         // schedule reducers
+        slaveList = new ArrayList<SlaveInfo>(MasterMain.slavePool.values());
         ArrayList<SocketAddress> reducerList = new ArrayList<SocketAddress>();
         Collections.sort(slaveList, new SlaveInfo.ReducerPrio());
 
@@ -441,7 +460,9 @@ System.out.println("add is" + add);
             System.out.println("Invite reducer failed");
             ArrayList<SocketAddress> tmp = new ArrayList<SocketAddress>();
             tmp.add(socket.getRemoteSocketAddress());
-            HashMap<SocketAddress, SocketAddress> map = MasterMain.handleLeave(tmp);
+            HashMap<SocketAddress, SocketAddress> map = (HashMap<SocketAddress, SocketAddress>)MasterMain.handleLeave(tmp);
+System.out.println("REDUCER LIST" + reducerList);
+System.out.println("MAP is" + map);
             for(SocketAddress sockaddr : map.keySet()) {
             	int idx = 0;
             	if((idx = reducerList.indexOf(sockaddr)) != -1) {

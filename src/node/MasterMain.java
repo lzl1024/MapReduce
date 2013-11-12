@@ -113,11 +113,11 @@ public class MasterMain {
      * @param content
      */
     public synchronized static HashMap<SocketAddress, SocketAddress> handleLeave(ArrayList<SocketAddress> removeListorg) {
-    	HashMap<SocketAddress, SocketAddress> map = new HashMap<SocketAddress, SocketAddress>();
+    	
     	synchronized(MasterMain.failedActiveMap) {
     		synchronized(MasterMain.slavePool) {
     			synchronized(MasterMain.listenToActive) {
-
+    	HashMap<SocketAddress, SocketAddress> map = new HashMap<SocketAddress, SocketAddress>();
     	ArrayList<SocketAddress> removeList = new ArrayList<SocketAddress>();
     	System.out.println("removeListorg is" + removeListorg);
     	for(SocketAddress delete : removeListorg) {
@@ -171,7 +171,7 @@ System.out.println("slavePool is" + MasterMain.slavePool);
                 ArrayList<SocketAddress> sockAddrList = FileSplit.splitLayout
                         .get(fileSplit);
 
-                if (sockAddrList.size() > 0) {
+                if (sockAddrList != null && sockAddrList.size() > 0) {
                     Collections.sort(slaveList, new SlaveInfo.MapperPrio());
                     Scheduler
                             .inviteMapper(slaveList.get(0).getSocket()
@@ -192,7 +192,9 @@ System.out.println("slavePool is" + MasterMain.slavePool);
             
             // change with balanced load
             Collections.sort(slaveList, new SlaveInfo.ReducerPrio());
+System.out.println("NEW ADD ITEM IN MAP" + MasterMain.failedMap.get(sockAddr) + "  " + slaveList.get(0).getSocketAddr());
             map.put(MasterMain.failedMap.get(sockAddr), slaveList.get(0).getSocketAddr());
+System.out.println("MAP AFTER ADDING " + map);
             for (SlaveInfo info : slaveList) {
                 Socket sock = info.getSocket();
                 ChangeReduceMsg msg = new ChangeReduceMsg(MasterMain.failedMap.get(sockAddr),
@@ -217,10 +219,12 @@ System.out.println("slavePool is" + MasterMain.slavePool);
                 handleLeave(failList);
             }
         }
+System.out.println("MAP BEFORE RETURN" + map);
+        return map;
     			}
     		}
     	}
-    	return map;
+    	
     }
 
     /**

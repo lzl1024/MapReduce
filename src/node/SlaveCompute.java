@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import mapreduce.MapperPerform;
 import mapreduce.ReducerPerform;
@@ -32,7 +33,7 @@ public class SlaveCompute extends Thread {
     public static ArrayList<Thread> mapperThreadList = new ArrayList<Thread>();
     public static HashMap<Integer, ArrayList<Thread>> waitingThreadMap = new HashMap<Integer, ArrayList<Thread>>();
     public static HashMap<Integer, Integer> fileLeftMap = new HashMap<Integer, Integer>();
-
+    public static HashMap<Integer, HashSet<String>> fileComeMap = new HashMap<Integer, HashSet<String>>();
     // constructor
     public SlaveCompute(Socket sock) {
         sockToMaster = sock;
@@ -62,10 +63,8 @@ public class SlaveCompute extends Thread {
                     new Message(MSG_TYPE.REDUCER_REQ, null).send(sockToMaster,
                             null, -1);
 
-                    /*if(SlaveListen.ListenSocket.getLocalPort() == 9003) {
-                    	System.exit(0);
-                    }
-                    */
+                    
+                    
                     // Create a thread to perform reducer task
                     ReducerAckMsg msgContent = (ReducerAckMsg) msgIn
                             .getContent();
@@ -78,15 +77,21 @@ public class SlaveCompute extends Thread {
                         waitingThreadMap.get(jobID).add(newReducer);
                         fileLeftMap.put(jobID, fileLeftMap.get(jobID)
                                 + msgContent.getfileNames().size());
+                       /* for(String e : msgContent.getfileNames()) {
+                        	HashSet<String> set = fileComeMap.get(jobID);
+                        	set.add(e);
+                        }
+                        */
                     } else {
                         ArrayList<Thread> threadList = new ArrayList<Thread>();
                         threadList.add(newReducer);
                         waitingThreadMap.put(jobID, threadList);
                         fileLeftMap
                                 .put(jobID, msgContent.getfileNames().size());
+                        fileComeMap.put(jobID, new HashSet<String>());
                     }
                     
-                    if (SlaveCompute.fileLeftMap.get(jobID) == 0) {
+                    if (SlaveCompute.fileLeftMap.get(jobID) == fileComeMap.get(jobID).size()) {
                         // start waiting threads
                         for (Thread thread : SlaveCompute.waitingThreadMap
                                 .get(jobID)) {
@@ -94,6 +99,7 @@ public class SlaveCompute extends Thread {
                         }
                         SlaveCompute.waitingThreadMap.remove(jobID);
                         SlaveCompute.fileLeftMap.remove(jobID);
+                        fileComeMap.remove(jobID);
                     }
                     
                     System.out.println(fileLeftMap);

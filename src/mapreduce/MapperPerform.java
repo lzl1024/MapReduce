@@ -70,9 +70,10 @@ public class MapperPerform extends Thread {
             	System.exit(0);
             }
             */
+            
             // send each splits to reducers
             sendSplits();
- 
+           
             // send complete to master
             Socket sock = new Socket(Constants.MasterIp,
                     Constants.SlaveActivePort);
