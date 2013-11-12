@@ -46,13 +46,10 @@ public class Scheduler extends Thread {
             try {
                 sock = serverSock.accept();
                 sock.setSoTimeout(Constants.RegularTimout);
-
                 msg = Message.receive(sock, null, -1);
                 
-                //debug
-                System.out.println(msg.getType());
             } catch (Exception e1) {
-                System.out.println("Failed to receive message");
+                System.out.println("Message contents no content");
                 continue;
             }
 
@@ -75,7 +72,6 @@ public class Scheduler extends Thread {
 
                 for (SocketAddress add : (ArrayList<SocketAddress>) msg
                         .getContent()) {
-System.out.println("add is" + add);
                 	if(MasterMain.listenToActive.get(add) == null) {
 
                 		content.add(MasterMain.failedActiveMap.get(add));
@@ -103,8 +99,10 @@ System.out.println("add is" + add);
             case REDUCER_COMPLETE:
                 System.out.println("receive a REDUCER_COMPLETE");
                 CompleteMsg comMsg = (CompleteMsg) msg.getContent();
+
                 ArrayList<SocketAddress> newList = new ArrayList<SocketAddress>();
                 newList.add(comMsg.getSockAddr());
+                
                 FileSplit.splitLayout.put(comMsg.getSplitName(), newList);
                 // add the splits number in slave
                 MasterMain.slavePool.get(comMsg.getSockAddr()).setSplits(
@@ -112,12 +110,11 @@ System.out.println("add is" + add);
                                 .getSplits() + 1);
 
                 JobInfo jobInfo = jobPool.get(comMsg.getJobID());
-System.out.println("(before remove)MapperJobSet is" + jobInfo.getMapperJobSet());
-System.out.println("comMsg.getSplitName()" + comMsg.getSplitName());
+
                 if(jobInfo.getMapperJobSet().contains(comMsg.getSplitName())) {
                 	jobInfo.getMapperJobSet().remove(comMsg.getSplitName());
                 }
-System.out.println("(after remove)MapperJobSet is" + jobInfo.getMapperJobSet());
+
                 // update slave pool
                 MasterMain.slavePool.get(comMsg.getSockAddr())
                         .getReducerTasks()
@@ -125,7 +122,6 @@ System.out.println("(after remove)MapperJobSet is" + jobInfo.getMapperJobSet());
 
                 // complete the whole work
                 if (jobInfo.getMapperJobSet().size() == 0) {
-                    System.out.println(FileSplit.splitLayout);
 
                     Integer jobID = jobInfo.getJob().getJobID();
                     // delete the file in master and in itself
@@ -172,15 +168,10 @@ System.out.println("(after remove)MapperJobSet is" + jobInfo.getMapperJobSet());
             case MAPPER_COMPLETE:
                 System.out.println("receive a MAPPER_COMPLETE");
                 // update file layout and slavePool
-                CompleteMsg receiveMsg = (CompleteMsg) msg.getContent();
-
+               // CompleteMsg receiveMsg = (CompleteMsg) msg.getContent();
                // if(MasterMain.slavePool.get(receiveMsg.getSockAddr()) == null)
                // MasterMain.slavePool.get(receiveMsg.getSockAddr())
                // .getMapperTasks().remove(receiveMsg.getSplitName());
-
-                
-                System.out.println("After Mapper FS Layout: "
-                        + FileSplit.splitLayout);
 
                 try {
                     new Message(MSG_TYPE.MAPPER_COMPLETE, null).send(sock,
@@ -332,7 +323,6 @@ System.out.println("(after remove)MapperJobSet is" + jobInfo.getMapperJobSet());
 
             }
         }
-        System.out.println(result);
 
         return result;
     }
@@ -364,8 +354,6 @@ System.out.println("(after remove)MapperJobSet is" + jobInfo.getMapperJobSet());
         while (i < slaveList.size()
                 && slaveList.get(i).getMapperTasks().size() <= Constants.IdealMapperJobs) {
             freeMappers.add(slaveList.get(i).getSocketAddr());
-            System.out.println("free Mapper is "
-                    + slaveList.get(i).getSocketAddr());
             i++;
 
         }
@@ -375,7 +363,6 @@ System.out.println("(after remove)MapperJobSet is" + jobInfo.getMapperJobSet());
         try {
             splits = FileSplit.fileDispatch(freeMappers, job.getInputFile(),
                     job.getJobID(), job.getRecordBegin(), job.getRecordEnd());
-            System.out.println("Current FS Layout: " + FileSplit.splitLayout);
         } catch (Exception e) {
             e.printStackTrace();
             throw new Exception("Split File Failed");
@@ -461,8 +448,8 @@ System.out.println("(after remove)MapperJobSet is" + jobInfo.getMapperJobSet());
             ArrayList<SocketAddress> tmp = new ArrayList<SocketAddress>();
             tmp.add(socket.getRemoteSocketAddress());
             HashMap<SocketAddress, SocketAddress> map = (HashMap<SocketAddress, SocketAddress>)MasterMain.handleLeave(tmp);
-System.out.println("REDUCER LIST" + reducerList);
-System.out.println("MAP is" + map);
+
+            // reset reducer list
             for(SocketAddress sockaddr : map.keySet()) {
             	int idx = 0;
             	if((idx = reducerList.indexOf(sockaddr)) != -1) {
@@ -539,7 +526,6 @@ System.out.println("MAP is" + map);
             }
         }
 
-        System.out.println("After delete:" + FileSplit.splitLayout);
         if (failList.size() > 0) {
             MasterMain.handleLeave(failList);
         }

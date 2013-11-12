@@ -97,7 +97,6 @@ public class Constants {
             IdealMapperJobs = Integer.parseInt(args.get("IdealMapperJobs"));
             ReplFac = Integer.parseInt(args.get("ReplFac"));
             startPort = Integer.parseInt(args.get("startPort"));
-            System.out.println("startPort from Config is " + startPort);
             endPort = Integer.parseInt(args.get("endPort"));
 
             MasterIp = args.get("MasterIp");

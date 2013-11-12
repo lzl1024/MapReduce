@@ -20,7 +20,7 @@ import util.Constants;
 import dfs.FileSplit;
 
 /**
- * The master node, contains scheduler
+ * The master node, handle join and fail recovery
  * 
  * @author zhuolinl dil1
  * 
@@ -28,16 +28,18 @@ import dfs.FileSplit;
 public class MasterMain {
     // pool to record the slave socket
     public static ConcurrentHashMap<SocketAddress, SlaveInfo> slavePool = new ConcurrentHashMap<SocketAddress, SlaveInfo>();
-    // key : slave to slave port, value : slave to master port
+    // key : slave to slave port, value : slave to master port, get the slave by its active socket
     public static ConcurrentHashMap<SocketAddress, SocketAddress> listenToActive = new ConcurrentHashMap<SocketAddress, SocketAddress>();
+    // the port should be allocated to the next slave node 
     public static int curPort;
-    //key is listenToActive value is slavePool
+    // key is listenToActive value is slavePool, record the failed node by active port
     public static ConcurrentHashMap<SocketAddress, SocketAddress> failedActiveMap = new ConcurrentHashMap<SocketAddress, SocketAddress>();
-    //key is slavePool
+    // key is slavePool, record the node that have failed
     public static ConcurrentHashMap<SocketAddress, SocketAddress> failedMap = new ConcurrentHashMap<SocketAddress, SocketAddress>();
+    
+
     public static void main(String[] args) {
         // fill up the constants
-
         try {
             new Constants(args[0]);
             curPort = Constants.startPort;
@@ -75,11 +77,10 @@ public class MasterMain {
             Socket sock = null;
             try {
                 sock = serverSock.accept();
-                System.out.println("sock RemoteAddr"
-                        + sock.getRemoteSocketAddress());
                 sock.setSoTimeout(Constants.RegularTimout);
                 curPort++;
-                System.out.println("curPort is" + curPort);
+
+                
                 if (curPort > Constants.endPort) {
                     System.out.println("Port pool used up.");
                     System.exit(0);
@@ -104,11 +105,11 @@ public class MasterMain {
     }
 
     /**
-     * Handle Failure or Quit situation 1. For workers mapper work: each work
+     * Handle Failure or Quit situation: 1. Send the file in file system to others who does not
+     * have this file according to load balance. 2. For workers mapper work: each work
      * select other proper node to do first check node with the file split. Then
-     * change 2. For workers reduce work: find another node, and announce
-     * everyone the replacer and the original one in the content of
-     * NODE_FAIL_ACK message
+     * change 3. For workers reduce work: find another node, and announce
+     * everyone the replacer and the original one in the content of CHANGE_REDUCE message
      * 
      * @param content
      */
@@ -119,16 +120,14 @@ public class MasterMain {
     			synchronized(MasterMain.listenToActive) {
     	HashMap<SocketAddress, SocketAddress> map = new HashMap<SocketAddress, SocketAddress>();
     	ArrayList<SocketAddress> removeList = new ArrayList<SocketAddress>();
-    	System.out.println("removeListorg is" + removeListorg);
+
+    	// just chose the node that haven't be handled before
     	for(SocketAddress delete : removeListorg) {
-    		System.out.println("delete is" + delete);
-    		System.out.println("MasterMain.failedMap" + MasterMain.failedActiveMap);
     		if(!MasterMain.failedActiveMap.containsValue(delete)) {
     			removeList.add(delete);
     		}
     	}
 
-        System.out.println("removeList is" + removeList);
 
         ArrayList<SlaveInfo> removed = new ArrayList<SlaveInfo>();
         for (SocketAddress add : removeList) {
@@ -136,20 +135,14 @@ public class MasterMain {
         }
 
         // delete the slave from pool, in case of the new mapper fail
-
         for (SocketAddress add : removeList) {
-System.out.println("listenToActive is" + MasterMain.listenToActive);
-System.out.println("add is" + add);
-System.out.println("slavePool is" + MasterMain.slavePool);
 			MasterMain.failedActiveMap.put(MasterMain.slavePool.get(add)
 						.getSocketAddr(), add);
 			MasterMain.failedMap.put(add, MasterMain.slavePool.get(add)
 						.getSocketAddr());
             MasterMain.listenToActive.remove(MasterMain.slavePool.get(add)
                         .getSocketAddr());
-            MasterMain.slavePool.remove(add);
-                
-                
+            MasterMain.slavePool.remove(add);       
         }
         
 
@@ -192,9 +185,8 @@ System.out.println("slavePool is" + MasterMain.slavePool);
             
             // change with balanced load
             Collections.sort(slaveList, new SlaveInfo.ReducerPrio());
-System.out.println("NEW ADD ITEM IN MAP" + MasterMain.failedMap.get(sockAddr) + "  " + slaveList.get(0).getSocketAddr());
             map.put(MasterMain.failedMap.get(sockAddr), slaveList.get(0).getSocketAddr());
-System.out.println("MAP AFTER ADDING " + map);
+
             for (SlaveInfo info : slaveList) {
                 Socket sock = info.getSocket();
                 ChangeReduceMsg msg = new ChangeReduceMsg(MasterMain.failedMap.get(sockAddr),
@@ -219,7 +211,7 @@ System.out.println("MAP AFTER ADDING " + map);
                 handleLeave(failList);
             }
         }
-System.out.println("MAP BEFORE RETURN" + map);
+
         return map;
     			}
     		}

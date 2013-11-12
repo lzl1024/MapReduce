@@ -10,7 +10,7 @@ import dfs.FileSplit;
 
 /**
  * 
- * Management tool
+ * Management tool for master
  * 
  */
 public class MasterManager extends Thread {

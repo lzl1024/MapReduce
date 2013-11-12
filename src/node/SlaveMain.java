@@ -48,8 +48,8 @@ public class SlaveMain {
             try {
                 cmdInput = in.readLine();
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
+                System.exit(-1);
             }
         }
 

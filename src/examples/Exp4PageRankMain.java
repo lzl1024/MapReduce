@@ -4,6 +4,12 @@ import io.LongWritable;
 import io.Text;
 import mapreduce.Job;
 
+/**
+ * 
+ * Example 4: Given a large wikipedia pagerank file and get the pagerank of some
+ * companys' websites.
+ *
+ */
 public class Exp4PageRankMain {
     public static void main(String[] args) {
         if (args.length != 3) {

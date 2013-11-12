@@ -21,6 +21,10 @@ import util.Constants;
  */
 public class DFSApi {
 
+    /**
+     * put a file onto the dfs
+     * @param fileName
+     */
     public static void put(String fileName) {
         Socket socket;
         try {
@@ -39,6 +43,12 @@ public class DFSApi {
 
     }
 
+    /**
+     * get a file from the dfs
+     * @param fileName
+     * @param newName
+     * @param getSplits
+     */
     @SuppressWarnings("unchecked")
     public static void get(String fileName, String newName, boolean getSplits) {
         String newfileName = Constants.FS_LOCATION + fileName + "_";
@@ -126,6 +136,10 @@ public class DFSApi {
         }
     }
 
+    /**
+     * delete a file in dfs
+     * @param fileName
+     */
     public static void delete(String fileName) {
         Socket socket;
         try {
@@ -141,6 +155,12 @@ public class DFSApi {
 
     }
 
+    /**
+     * read a specific record in a file in dfs, like RandomAccessFile 
+     * @param recordNum
+     * @param fileName
+     * @return
+     */
     public static String readRecord(Long recordNum, String fileName) {
         Socket socket;
         String record = null;

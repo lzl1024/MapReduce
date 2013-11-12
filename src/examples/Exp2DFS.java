@@ -3,6 +3,12 @@ package examples;
 import util.Constants;
 import dfs.DFSApi;
 
+/**
+ * 
+ * Example 2: send a file onto dfs, and download it again with another name
+ * then read the first line of the file and finally delete the file on dfs
+ *
+ */
 public class Exp2DFS {
     public static void main(String[] args) throws Exception {
         new Constants(args[0]);

@@ -22,7 +22,7 @@ import dfs.DeleteFileThread;
 import dfs.FileTransmitServer;
 
 /**
- * The computation routine of the slave
+ * The computation routine of the slave, handle the message send by master
  */
 public class SlaveCompute extends Thread {
 
@@ -30,10 +30,15 @@ public class SlaveCompute extends Thread {
     // failed reducer task, wait for new reducer to send files
     // key: socketAddress, value: splitName
     public static HashMap<SocketAddress, ArrayList<String>> failedCache = new HashMap<SocketAddress, ArrayList<String>>();
-    public static ArrayList<Thread> mapperThreadList = new ArrayList<Thread>();
+    // mapper thread which are running
+    public static ArrayList<Thread> mapperThreadList = new ArrayList<Thread>(); 
+    // reducer thread which are waiting for mapper running
     public static HashMap<Integer, ArrayList<Thread>> waitingThreadMap = new HashMap<Integer, ArrayList<Thread>>();
+    // reducer wait for how many mapper result files
     public static HashMap<Integer, Integer> fileLeftMap = new HashMap<Integer, Integer>();
+    // reducer has already get how many mapper result files
     public static HashMap<Integer, HashSet<String>> fileComeMap = new HashMap<Integer, HashSet<String>>();
+    
     // constructor
     public SlaveCompute(Socket sock) {
         sockToMaster = sock;
@@ -58,13 +63,10 @@ public class SlaveCompute extends Thread {
                     mapperThreadList.add(newMapper);
                     newMapper.start();
                     break;
+                    // get a reducer request message
                 case REDUCER_REQ:
-
                     new Message(MSG_TYPE.REDUCER_REQ, null).send(sockToMaster,
                             null, -1);
-
-                    
-                    
                     // Create a thread to perform reducer task
                     ReducerAckMsg msgContent = (ReducerAckMsg) msgIn
                             .getContent();
@@ -77,11 +79,6 @@ public class SlaveCompute extends Thread {
                         waitingThreadMap.get(jobID).add(newReducer);
                         fileLeftMap.put(jobID, fileLeftMap.get(jobID)
                                 + msgContent.getfileNames().size());
-                       /* for(String e : msgContent.getfileNames()) {
-                        	HashSet<String> set = fileComeMap.get(jobID);
-                        	set.add(e);
-                        }
-                        */
                     } else {
                         ArrayList<Thread> threadList = new ArrayList<Thread>();
                         threadList.add(newReducer);
@@ -102,21 +99,24 @@ public class SlaveCompute extends Thread {
                         fileComeMap.remove(jobID);
                     }
                     
-                    System.out.println(fileLeftMap);
                     break;
+                // get the listen port and open it
                 case NOTIFY_PORT:
-                	System.out.println("curPort is" + (Integer) msgIn.getContent());
+                	System.out.println("listen port is" + (Integer) msgIn.getContent());
                     new SlaveListen((Integer) msgIn.getContent()).start();
                     // send back to master same msg
                     msgIn.send(sockToMaster, null, -1);
                     break;
+                // message to change the reducer
                 case CHANGE_REDUCELIST:
                     new SlaveChangeReduce((ChangeReduceMsg) msgIn.getContent())
                             .start();
                     break;
+                // message to delete file with some prefix
                 case DELETE_FILE:
                     new DeleteFileThread((String) msgIn.getContent()).start();
                     break;
+                // message to read a random record from a file
                 case RANDOM_RECORD:
                     new Message(MSG_TYPE.RANDOM_RECORD,
                             findRecord((RecordWrapperMsg) msgIn.getContent()))
@@ -127,8 +127,7 @@ public class SlaveCompute extends Thread {
                     CompleteMsg downloadMsg = (CompleteMsg) msgIn.getContent();
                     Socket downloadSocket = new Socket();
                     try {
-                        downloadSocket.connect(downloadMsg.getSockAddr());
-System.out.println("download soceket in line 127" + downloadSocket);                        
+                        downloadSocket.connect(downloadMsg.getSockAddr());                        
                         new Message(MSG_TYPE.GET_FILE,
                                 downloadMsg.getSplitName()).send(
                                 downloadSocket, null, -1);
@@ -136,7 +135,6 @@ System.out.println("download soceket in line 127" + downloadSocket);
                                 downloadMsg.getSplitName()).start();               
 
                     } catch (Exception e) {
-                    	e.printStackTrace();
                         try {
                             // send node fail message to inform master
                             Socket failSock = new Socket(Constants.MasterIp,
@@ -163,7 +161,6 @@ System.out.println("download soceket in line 127" + downloadSocket);
                 System.out.println("Connection to master broke");
                 System.exit(0);
             }
-            System.out.println(msgIn.getType() + " :handle success");
         }
     }
 

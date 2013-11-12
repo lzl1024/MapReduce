@@ -6,6 +6,11 @@ import java.util.HashSet;
 
 import util.Constants;
 
+/**
+ * 
+ * Class the record the information of a job
+ *
+ */
 public class JobInfo {
 
     private Socket sock;
@@ -14,7 +19,6 @@ public class JobInfo {
 	private HashSet<String> mapperJobSet;
 
 
-	
     public JobInfo(Job job, Socket sock, int remainWorks) {
         this.job = job;
         this.sock = sock;

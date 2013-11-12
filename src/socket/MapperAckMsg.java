@@ -46,8 +46,10 @@ public class MapperAckMsg implements Serializable {
         this.splitName = splitName;
     }
 
+    @Override
     public String toString() {
-        return this.mapperClass + " " + this.splitName + " "
-                + this.reducerList.toString();
+        return "MapperAckMsg [reducerList=" + reducerList + ", mapperClass="
+                + mapperClass + ", splitName=" + splitName + "]";
     }
+
 }

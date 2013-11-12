@@ -13,12 +13,18 @@ import socket.Message.MSG_TYPE;
 import util.Constants;
 import dfs.FileTransmitServer;
 
+/**
+ * 
+ * The slave will listen this port for message
+ *
+ */
 public class SlaveListen extends Thread {
     public static ServerSocket ListenSocket = null;
     public static SocketAddress sockComMsg;
+    
     public SlaveListen(int port) {
         try {
-            this.ListenSocket = new ServerSocket(port);
+            ListenSocket = new ServerSocket(port);
         } catch (IOException e) {
             e.printStackTrace();
             System.out.println("Cannot open listen socket");
@@ -33,25 +39,24 @@ public class SlaveListen extends Thread {
             try {
                 sock = ListenSocket.accept();
                 sockComMsg = sock.getLocalSocketAddress();
-System.out.println("sock Remote" + sock.getRemoteSocketAddress());
                 msgIn = Message.receive(sock, null, -1);
             } catch (Exception e) {
                 e.printStackTrace();
                 try {
 					sock.close();
 				} catch (IOException e1) {
-					// TODO Auto-generated catch block
+					System.out.println("Failed to close the listen socket");
 					e1.printStackTrace();
 				}
                 continue;
             }
             switch (msgIn.getType()) {
             case FILE_DOWNLOAD:
+            // request to download a file on the other side
             	CompleteMsg msgCom = (CompleteMsg) msgIn.getContent();
                 String receiveFileName = msgCom.getSplitName();
 
                 try {
-System.out.println("sock in SlaveListen line 52 is " + msgCom.getSockAddr() + " fileName: "+ receiveFileName);
                     FileTransmitServer.receiveFile(receiveFileName
                             + Constants.REDUCE_FILE_SUFFIX, sock);
 
@@ -71,14 +76,10 @@ System.out.println("sock in SlaveListen line 52 is " + msgCom.getSockAddr() + " 
                     }
                 }
 
-                System.out.println("receiveFilename in slaveListen "
-                        + receiveFileName);
-
                 int jobId = Integer.parseInt(receiveFileName.substring(
                         Constants.FS_LOCATION.length(),
                         receiveFileName.indexOf("_")));
 
-                System.out.println("JobID in slavelisten " + jobId);
                 if(SlaveCompute.fileComeMap.containsKey(jobId)) {
                 	SlaveCompute.fileComeMap.get(jobId).add(receiveFileName);
                 }else {
@@ -89,7 +90,6 @@ System.out.println("sock in SlaveListen line 52 is " + msgCom.getSockAddr() + " 
                 }
 
                 // update slave file map to start specific reducer
-System.out.println("fileComeMap" + SlaveCompute.fileComeMap);
                 if (SlaveCompute.fileLeftMap.containsKey(jobId) && SlaveCompute.fileLeftMap.get(jobId) == 
                 		SlaveCompute.fileComeMap.get(jobId).size()) {
                     // start waiting threads
@@ -122,7 +122,7 @@ System.out.println("fileComeMap" + SlaveCompute.fileComeMap);
                 break;
             case GET_FILE:
                 System.out
-                        .println("Slave now is requested to send files to user");
+                        .println("Slave now is requested to send files to user: " + (String) msgIn.getContent());
 
                new FileTransmitServer.SlaveSendFile(sock,
                         (String) msgIn.getContent()).start();

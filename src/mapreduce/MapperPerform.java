@@ -35,15 +35,15 @@ public class MapperPerform extends Thread {
         this.splitName = mapperAck.getSplitName();
     }
 
+    /**
+     * Main routine to perform mapper
+     */
     public void run() {
         // open the record file
         BufferedReader reader = null;
         try {
             FileReader fd = new FileReader(this.splitName);
             reader = new BufferedReader(fd);
-            
-
-            
             
             // reflect the mapper class
             Class<?> obj = Class.forName(Constants.Class_PREFIX
@@ -65,11 +65,7 @@ public class MapperPerform extends Thread {
             }
             reader.close();
             fd.close();
-            
-           /* if(SlaveListen.ListenSocket.getLocalPort() == 9003) {
-            	System.exit(0);
-            }
-            */
+
             
             // send each splits to reducers
             sendSplits();
@@ -91,13 +87,17 @@ public class MapperPerform extends Thread {
         }
     }
 
+    /**
+     * Send the splits to its reducer according the jobs' reducer list
+     * @return
+     */
     private boolean sendSplits() {
         ArrayList<SocketAddress> failNode = new ArrayList<SocketAddress>();
         for (int i = 0; i < reducerList.size(); i++) {
             Socket socket = new Socket();
             SocketAddress add = reducerList.get(i);
             String fileName = splitName + "_" + (i + 1);
-            System.out.println("Mapper send split "+fileName);
+
             try {
                 socket.connect(add);
                 
@@ -114,7 +114,6 @@ public class MapperPerform extends Thread {
                 	sentFileMap.put(socket.getRemoteSocketAddress(), newList);
                 }
                 	
-                System.out.println("Successs in 96");
                 // send file
                 FileTransmitServer.sendFile(fileName, socket);
                 if (!socket.isClosed()) {

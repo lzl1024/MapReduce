@@ -5,6 +5,11 @@ import java.io.FilenameFilter;
 
 import util.Constants;
 
+/**
+ * 
+ * Delete all of the file in the file system based on the file prefix
+ *
+ */
 public class DeleteFileThread extends Thread {
     private String fileName;
 

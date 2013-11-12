@@ -6,7 +6,6 @@ public class RecordWrapperMsg implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-
     private Long recordNum;
     private String fileName;
     

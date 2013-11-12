@@ -7,6 +7,11 @@ import java.util.ArrayList;
 
 import util.Constants;
 
+/**
+ * 
+ * Write record class of the mapreduce and dfs
+ *
+ */
 public class Context {
 
     private ArrayList<PrintWriter> writerList = new ArrayList<PrintWriter>();
@@ -29,7 +34,6 @@ public class Context {
 
     public void write(Writable<?> key, Writable<?> value) {
         // get proper writer
-
         PrintWriter out = writerList.get(Math.abs(key.hashCode()) % size);
         out.println(key.get() + " " + Constants.divisor + " " + value.get());
     }

@@ -4,6 +4,11 @@ import io.IntWritable;
 import io.Text;
 import mapreduce.Job;
 
+/**
+ * 
+ * Example 1: Do word count for one file
+ *
+ */
 public class Exp1WordCountMain {
 
     public static void main(String[] args) {
@@ -25,7 +30,7 @@ public class Exp1WordCountMain {
         job.setReducerKeyClass(Text.class);
         job.setReducerValueClass(IntWritable.class);
         job.setRecordBegin(10L);
-        job.setRecordEnd(11L);
+        job.setRecordEnd(10000L);
 
         try {
             job.waitForCompletion(args[0]);

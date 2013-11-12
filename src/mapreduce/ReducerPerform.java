@@ -15,7 +15,6 @@ import java.util.Collections;
 import java.util.PriorityQueue;
 
 import node.SlaveCompute;
-import node.SlaveListen;
 import socket.CompleteMsg;
 import socket.Message;
 import socket.Message.MSG_TYPE;
@@ -68,6 +67,9 @@ public class ReducerPerform extends Thread {
         }
     }
 
+    /**
+     * Main routine to run reducer task
+     */
     public void run() {
         // get the file Names and sort its record
     	
@@ -200,7 +202,7 @@ public class ReducerPerform extends Thread {
     }
 
     /**
-     * Perform reduce function
+     * Perform reduce function, using reflection
      * 
      * @param key
      * @param sameRecord
@@ -218,7 +220,7 @@ public class ReducerPerform extends Thread {
     }
 
     /**
-     * Read a record from a line
+     * Read the target record from a line
      * 
      * @param line
      * @return

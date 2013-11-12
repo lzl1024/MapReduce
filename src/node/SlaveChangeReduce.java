@@ -21,16 +21,19 @@ public class SlaveChangeReduce extends Thread {
         this.msg = myMsg;
     }
 
+    /**
+     * the thread to change the reduce list from one address to another
+     */
     public void run() {
         if (msg != null) {
             SocketAddress oldSocketAddr = msg.getOld();
             SocketAddress newSocketAddr = msg.getNew();
-            System.out.println("old sockADDR" + oldSocketAddr);
-            System.out.println("new sockADDR" + newSocketAddr);
             
+            // request the files that the old reducer has already have
             if(MapperPerform.sentFileMap.containsKey(oldSocketAddr)) {
             	ArrayList<String> tmpList = MapperPerform.sentFileMap.get(oldSocketAddr);
             	ArrayList<String> newList = new ArrayList<String>();
+            	
             	for(String str : tmpList) {
             		File detectFile = new File(str);
             		if(detectFile.exists()) {
@@ -43,8 +46,7 @@ public class SlaveChangeReduce extends Thread {
             					sock.close();
             				newList.add(str);
             			} catch (Exception e) {
-            				// TODO Auto-generated catch block
-            				e.printStackTrace();
+            				System.out.println("New reducer also failed");
             			}    
             		}
             	}
@@ -52,25 +54,25 @@ public class SlaveChangeReduce extends Thread {
                 MapperPerform.sentFileMap.remove(oldSocketAddr);
             }
             
+            /**
+             * check the reducelist to find which reducer should be replaced
+             */
             for (int i = 0; i < SlaveCompute.mapperThreadList.size(); i++) {
                 MapperPerform newMapper = (MapperPerform) SlaveCompute.mapperThreadList
                         .get(i);
                 ArrayList<SocketAddress> list = newMapper.getReduceList();
-                System.out.println("reducelist is" + list);
                 int index = list.indexOf(oldSocketAddr);
                 if(index != -1)
                 	list.set(index, newSocketAddr);
                 
             }
             Socket sock = new Socket();
- System.out.println("faileChache: " + SlaveCompute.failedCache);
             ArrayList<String> failedFiles = SlaveCompute.failedCache.get(oldSocketAddr);
 
             try {			
 				if(failedFiles != null) {
 	                // remove the oldscoketAddr in failed Cache
 	                SlaveCompute.failedCache.remove(oldSocketAddr);
-System.out.println("failedFiles: " + failedFiles);
                     for (int i = failedFiles.size()-1; i >=0 ; i--) {
                         String e = failedFiles.get(i);
 						sock.connect(newSocketAddr);
@@ -79,9 +81,7 @@ System.out.println("failedFiles: " + failedFiles);
 						sock.close();
 						failedFiles.remove(i);
 					}
-				}
-				
-				
+				}		
 			} catch (Exception e) {
 				System.out.println("send files in failedCache failure.");
 				// update the failedCache place
@@ -97,7 +97,6 @@ System.out.println("failedFiles: " + failedFiles);
 					System.exit(-1);
 				}
 				
-				e.printStackTrace();
 			}
             
         }
