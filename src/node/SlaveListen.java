@@ -136,6 +136,7 @@ System.out.println("fileComeMap" + SlaveCompute.fileComeMap);
                         sock.close();
                     }
                 } catch (Exception e) {
+                	e.printStackTrace();
                     System.out
                             .println("Failed to connect with master : FILE_SPLIT_REQ");
                 }

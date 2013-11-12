@@ -118,9 +118,7 @@ public class ReducerPerform extends Thread {
             e.printStackTrace();
             System.exit(-1);
         }
-        if(SlaveListen.ListenSocket.getLocalPort() == 9002) {
-        	System.exit(0);
-        }
+
         // send success message back to master
         try {
             Socket tmpSock = new Socket(Constants.MasterIp,

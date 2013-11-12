@@ -1,5 +1,5 @@
-#ConfigFile = configuration/config.txt
-ConfigFile = configuration/config_largeFile.txt
+ConfigFile = configuration/config.txt
+#ConfigFile = configuration/config_largeFile.txt
 
 InputPath1 = harrypotter.txt
 OutputPath1 = harrypotter.out
