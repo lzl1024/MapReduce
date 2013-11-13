@@ -34,4 +34,9 @@ public class Text implements Writable<String> {
     public int hashCode() {
         return field.hashCode();
     }
+    
+    @Override
+	public String toString() {
+		return field.toString();
+	}
 }

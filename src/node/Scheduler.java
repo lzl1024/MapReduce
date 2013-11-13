@@ -385,7 +385,7 @@ public class Scheduler extends Thread {
 
         if (reducerList.size() == 0) {
             System.out.println("All reducers are full.");
-            System.exit(0);
+            throw new Exception();
         } else {
             System.out.println("reducer size is " + reducerList.size());
         }

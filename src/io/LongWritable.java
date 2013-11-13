@@ -25,6 +25,11 @@ public class LongWritable implements Writable<Long>{
     }
 
     @Override
+	public String toString() {
+		return field.toString();
+	}
+
+	@Override
     public void parse(String fields) {
         field = Long.parseLong(fields.trim());
     }

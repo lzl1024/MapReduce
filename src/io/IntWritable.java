@@ -34,4 +34,9 @@ public class IntWritable implements Writable<Integer> {
     public int hashCode() {
         return field.hashCode();
     }
+    
+    @Override
+	public String toString() {
+		return field.toString();
+	}
 }

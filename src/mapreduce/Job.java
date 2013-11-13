@@ -190,4 +190,15 @@ public class Job implements Serializable {
         }
         return i == 1000 ? false : true;
     }
+
+	@Override
+	public String toString() {
+		return "Job [jobID=" + jobID + ", jobName=" + jobName
+				+ ", MapperClass=" + MapperClass + ", ReducerClass="
+				+ ReducerClass + ", inputFile=" + inputFile + ", outputFile="
+				+ outputFile + ", ReducerKeyClass=" + ReducerKeyClass
+				+ ", ReducerValueClass=" + ReducerValueClass + ", recordBegin="
+				+ recordBegin + ", recordEnd=" + recordEnd + "]";
+	}
+    
 }
