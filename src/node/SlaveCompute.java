@@ -157,7 +157,6 @@ public class SlaveCompute extends Thread {
                     break;
                 }
             } catch (Exception e) {
-            	e.printStackTrace();
                 System.out.println("Connection to master broke");
                 System.exit(0);
             }

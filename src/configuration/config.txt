@@ -1,7 +1,7 @@
 //Socket Configuration
 MainRoutingPort=10160
 SlaveActivePort=10162
-MasterIp=localhost
+MasterIp=128.2.13.145
 
 //Network Configuration
 FileDownloadTimeout=20000

@@ -28,7 +28,6 @@ public class JobInfo {
         
         for (int i = 1; i <= remainWorks; i++) {
             outSplitName.add(job.getJobID() + "##_" + i + "_1");
-            mapperJobSet.add(Constants.FS_LOCATION + job.getJobID() + "##_" + i + "_1");
         }
     }
     
@@ -60,6 +59,12 @@ public class JobInfo {
 
     public void setJob(Job job) {
         this.job = job;
+    }
+
+    public void generateMapSet(int size) {
+    	for (int i = 1; i <= size; i++) {
+            mapperJobSet.add(Constants.FS_LOCATION + outSplitName.get(i - 1));
+        }
     }
 
     @Override

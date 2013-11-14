@@ -130,7 +130,7 @@ public class Scheduler extends Thread {
                     	
                     	for(SlaveInfo e : MasterMain.slavePool.values()) {
                     		for(String str :e.getMapperTasks()) {
-                    			if(str.startsWith(jobID.toString())) {
+                    			if(str.startsWith(Constants.FS_LOCATION + jobID.toString())) {
                     				e.getMapperTasks().remove(str);
                     			}
                     		}
@@ -390,6 +390,7 @@ public class Scheduler extends Thread {
             System.out.println("reducer size is " + reducerList.size());
         }
 
+        jobInfo.generateMapSet(reducerList.size());
         
         // schedule mappers
         HashSet<SocketAddress> takedSock = new HashSet<SocketAddress>();
